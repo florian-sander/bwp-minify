@@ -20,7 +20,7 @@ Allows you to minify your CSS and JS files for faster page loading for visitors.
 * Gives you total control over how this plugin minifies your scripts
 * Supports script localization (`wp_localize_script()`)
 * Supports RTL stylesheets
-* Supports media-specific stylesheets (e.g. ‘screen’, ‘print’, etc.)
+* Supports media-specific stylesheets (e.g. 'screen', 'print', etc.)
 * Supports conditional stylesheets (e.g. `<!--[if lt IE 7]>`)
 * Provides hooks for further customization
 * WordPress Multi-site compatible (not tested with WPMU)
