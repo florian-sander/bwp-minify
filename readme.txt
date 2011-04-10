@@ -25,6 +25,10 @@ Allows you to minify your CSS and JS files for faster page loading for visitors.
 * Provides hooks for further customization
 * WordPress Multi-site compatible (not tested with WPMU)
 
+**Languages**
+
+* This plugin is currently available only in English. Please [help translate](http://betterwp.net/wordpress-tips/create-pot-file-using-poedit/) it!
+
 **Important Notes**
 
 The cache folder must be writable, please visit [Plugin's Official Page](http://betterwp.net/wordpress-plugins/bwp-minify/) for more information!
