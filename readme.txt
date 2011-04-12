@@ -4,7 +4,7 @@ Donate link: http://betterwp.net/wordpress-plugins/bwp-minify/
 Tags: CSS, javascript, JS, minify, minification, optimization, optimize
 Requires at least: 2.8
 Tested up to: 3.1.1
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 
 Allows you to minify your CSS and JS files for faster page loading for visitors.
 
@@ -35,7 +35,11 @@ The cache folder must be writable, please visit [Plugin's Official Page](http://
 
 == Installation ==
 
-You should not have any trouble installing this plugin. You can read the [instructions](http://betterwp.net/wordpress-plugins/bwp-minify/installation/) if you wish.
+1. Upload the `bwp-minify` folder to the `/wp-content/plugins/` directory
+2. Activate the plugin through the Plugins menu in WordPress. After activation, you should see a menu of this plugin under Settings.
+3. Configure the plugin, optionally choose a minify URL (ony recommended if you are experienced with URL and server paths), and modify Minify's `config.php` as you wish. Please read [here](http://betterwp.net/wordpress-plugins/bwp-minify/#customization) for more information.
+4. Make sure the `cache` folder is writable, by `CHMOD` it to either `755` or `777`, depending on which one will work for you.
+5. Enjoy!
 
 == Frequently Asked Questions ==
 
@@ -43,9 +47,12 @@ You should not have any trouble installing this plugin. You can read the [instru
 
 == Screenshots ==
 
-None yet!
+1. Changing the Minify URL, now one can have a shorter and nicer URL ;)
 
 == Changelog ==
+
+= 1.0.1 =
+* The plugin should now detect cache folder correctly for users who install WordPress in a sub-directory.
 
 = 1.0.0 =
 * Initial Release.

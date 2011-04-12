@@ -317,8 +317,10 @@ if (!empty($page))
 		$temp = @parse_url($minurl);
 		$site_url = $temp['scheme'] . '://' . $temp['host'];
 		$guess_cache = str_replace($site_url, '', $minurl);
-		$guess_cache = dirname(ABSPATH . trim($guess_cache, '/')) . '/cache/';
-		return str_replace('\\', '/', $guess_cache);		
+		// @since 1.0.1
+		$guess_cache = substr($guess_cache, 0, -4);
+		$guess_cache = $_SERVER['DOCUMENT_ROOT'] . trim($guess_cache, '/') . '/cache/';
+		return apply_filters('bwp_minify_cache_dir', str_replace('\\', '/', $guess_cache));
 	}
 
 	function parse_positions()
