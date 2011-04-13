@@ -53,6 +53,7 @@ The cache folder must be writable, please visit [Plugin's Official Page](http://
 
 = 1.0.2 =
 * Fixed a compatibility issue with other plugins loading styles and scripts on a separate .php page. Thanks to larry!
+* Also fixed a possible bug in 1.0.1
 
 = 1.0.1 =
 * The plugin should now detect cache folder correctly for users who install WordPress in a sub-directory.
