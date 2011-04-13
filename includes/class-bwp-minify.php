@@ -74,7 +74,7 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 	/**
 	 * Constructor
 	 */	
-	function __construct($version = '1.0.1')
+	function __construct($version = '1.0.2')
 	{
 		// Plugin's title
 		$this->plugin_title = 'BetterWP Minify';
@@ -123,7 +123,7 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 
 	function add_hooks()
 	{
-		if (!is_admin() && 'yes' == $this->options['enable_auto'])
+		if (defined('WP_USE_THEMES') && !is_admin() && 'yes' == $this->options['enable_auto'])
 		{
 			add_filter('print_styles_array', array($this, 'minify_styles'));
 			add_filter('print_scripts_array', array($this, 'minify_scripts'));
@@ -532,7 +532,8 @@ if (!empty($page))
 			// Also do not proceed if we can not print any more (except for login page)
 			$the_style = $wp_styles->registered[$handle];
 			$src = $the_style->src;
-			if ($this->is_in($handle, 'style_ignore'))
+			// check for is_bool @since 1.0.2
+			if ($this->is_in($handle, 'style_ignore') || is_bool($src))
 				$temp[] = $handle;
 			else if ($this->is_in($handle, 'style_direct'))
 			{
@@ -575,7 +576,7 @@ if (!empty($page))
 			else
 				$temp[] = $handle;
 		}
-		
+
 		$this->printable = false;
 
 		return $temp;
