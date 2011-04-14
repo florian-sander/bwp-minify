@@ -74,7 +74,7 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 	/**
 	 * Constructor
 	 */	
-	function __construct($version = '1.0.2')
+	function __construct($version = '1.0.3')
 	{
 		// Plugin's title
 		$this->plugin_title = 'BetterWP Minify';
@@ -423,6 +423,19 @@ if (!empty($page))
 	}
 
 	/**
+	 * Make sure the source is valid.
+	 *
+	 * @since 1.0.3
+	 */
+	function is_source_valid($src = '')
+	{
+		// Sources that contain ?, =, & will be invalid
+		if (strpos($src, '?') === false && strpos($src, '=') === false && strpos($src, '&') === false)
+			return true;
+		return false;
+	}
+
+	/**
 	 * Make sure the media file is in expected format before being added to our minify string
 	 */
 	function process_media_source($src = '')
@@ -430,6 +443,10 @@ if (!empty($page))
 		$src = strtolower($src);
 		// remove siteurl in the source if necessary
 		$src = str_replace(get_option('siteurl'), '', $src);
+		// @since 1.0.3
+		$src = str_replace('./', '/', $src);
+		$src = str_replace('\\', '/', $src);
+		$src = preg_replace('#[\/]{2,}#iu', '/', $src);
 		$src = ltrim($src, '/');
 		return $src;
 	}
@@ -533,7 +550,7 @@ if (!empty($page))
 			$the_style = $wp_styles->registered[$handle];
 			$src = $the_style->src;
 			// check for is_bool @since 1.0.2
-			if ($this->is_in($handle, 'style_ignore') || is_bool($src))
+			if ($this->is_in($handle, 'style_ignore') || is_bool($src) || !$this->is_source_valid($src))
 				$temp[] = $handle;
 			else if ($this->is_in($handle, 'style_direct'))
 			{
@@ -658,7 +675,7 @@ if (!empty($page))
 		{
 			// Take the src from registred scripts, do not proceed if the src is external
 			$src = $wp_scripts->registered[$script_handle]->src;
-			if (!empty($src) && $this->is_local($src))
+			if (!empty($src) && $this->is_source_valid($src) && $this->is_local($src))
 			{
 				$src = $this->process_media_source($src);
 				// If this script does not belong to 'direct' or 'ignore' list
