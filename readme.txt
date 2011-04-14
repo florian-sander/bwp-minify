@@ -53,7 +53,7 @@ The cache folder must be writable, please visit [Plugin's Official Page](http://
 
 = 1.0.3 =
 * Fixed a compatibility issue with dynamically generated media files, thanks to naimer!
-* Not really a changelog, but a small snippet for users who want to exclude CSS files has been posted.
+* Not really a changelog, but [a small snippet](http://betterwp.net/wordpress-plugins/bwp-minify/#positioning-your-scripts) for users who want to exclude CSS files has been posted.
 
 = 1.0.2 =
 * Fixed a compatibility issue with other plugins loading styles and scripts on a separate .php page. Thanks to larry!
