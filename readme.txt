@@ -3,8 +3,8 @@ Contributors: OddOneOut
 Donate link: http://betterwp.net/wordpress-plugins/bwp-minify/
 Tags: CSS, javascript, JS, minify, minification, optimization, optimize
 Requires at least: 2.8
-Tested up to: 3.1.1
-Stable tag: 1.0.3
+Tested up to: 3.1.3
+Stable tag: 1.0.4
 
 Allows you to minify your CSS and JS files for faster page loading for visitors.
 
@@ -33,6 +33,11 @@ Allows you to minify your CSS and JS files for faster page loading for visitors.
 
 The cache folder must be writable, please visit [Plugin's Official Page](http://betterwp.net/wordpress-plugins/bwp-minify/) for more information!
 
+**Get in touch**
+
+* I'm available at [BetterWP.net](http://betterwp.net) and you can also follow me on [Twitter](http://twitter.com/0dd0ne0ut).
+* Check out [latest WordPress Tips and Ideas](http://feeds.feedburner.com/BetterWPnet) from BetterWP.net.
+
 == Installation ==
 
 1. Upload the `bwp-minify` folder to the `/wp-content/plugins/` directory
@@ -50,6 +55,10 @@ The cache folder must be writable, please visit [Plugin's Official Page](http://
 1. Changing the Minify URL, now one can have a shorter and nicer URL ;)
 
 == Changelog ==
+
+= 1.0.4 =
+* Fixed an incompatibility issue with media files' uppercase letters.
+* Fixed a minor undefined offset notice, thanks to Torsten!
 
 = 1.0.3 =
 * Fixed a compatibility issue with dynamically generated media files, thanks to naimer!

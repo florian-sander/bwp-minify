@@ -74,7 +74,7 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 	/**
 	 * Constructor
 	 */	
-	function __construct($version = '1.0.3')
+	function __construct($version = '1.0.4')
 	{
 		// Plugin's title
 		$this->plugin_title = 'BetterWP Minify';
@@ -440,7 +440,7 @@ if (!empty($page))
 	 */
 	function process_media_source($src = '')
 	{
-		$src = strtolower($src);
+		//$src = strtolower($src);
 		// remove siteurl in the source if necessary
 		$src = str_replace(get_option('siteurl'), '', $src);
 		// @since 1.0.3
@@ -646,7 +646,7 @@ if (!empty($page))
 		global $wp_scripts;
 
 		// Avoid conflict with WordPress 3.1
-		if (1 == sizeof($todo) && 'l10n' == $todo[0])
+		if (1 == sizeof($todo) && isset($todo[0]) && 'l10n' == $todo[0])
 			return array();
 
 		$header_count = 0;
