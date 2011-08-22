@@ -39,13 +39,13 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 	/**
 	 * Hold all scripts to be printed in <head> section
 	 */
-	var $header_scripts = array(array()), $header_l10n = array();
+	var $header_scripts = array(array()), $header_l10n = array(), $header_dynamic = array();
 
 	/**
 	 * Hold all scripts to be printed just before </body>
 	 */
-	var $footer_scripts = array(array()), $footer_l10n = array();
-	
+	var $footer_scripts = array(array()), $footer_l10n = array(), $footer_dynamic = array();
+
 	/**
 	 * Determine positions to manually put scripts in
 	 */
@@ -59,7 +59,7 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 	/**
 	 * Queued styles to be printed
 	 */
-	var $styles = array(array()), $media_styles = array('print' => array());
+	var $styles = array(array()), $media_styles = array('print' => array()), $dynamic_styles = array();
 	 
 	/**
 	 * Are we still able to print styles?
@@ -74,7 +74,7 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 	/**
 	 * Constructor
 	 */	
-	function __construct($version = '1.0.4')
+	function __construct($version = '1.0.5')
 	{
 		// Plugin's title
 		$this->plugin_title = 'BetterWP Minify';
@@ -105,7 +105,7 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 		$this->site_options = array('input_minurl', 'input_cache_dir');
 
 		$this->build_properties('BWP_MINIFY', 'bwp-minify', $options, 'BetterWP Minify', dirname(dirname(__FILE__)) . '/bwp-minify.php', 'http://betterwp.net/wordpress-plugins/bwp-minify/', false);
-		$this->options_default['input_minurl'] = plugin_dir_url($this->plugin_file) . 'min/';
+		$this->options_default['input_minurl'] = apply_filters('bwp_minify_min_dir', plugin_dir_url($this->plugin_file) . 'min/');
 
 		$this->add_option_key('BWP_MINIFY_OPTION_GENERAL', 'bwp_minify_general', __('Better WordPress Minify Settings', 'bwp-minify'));
 		$this->init();
@@ -123,16 +123,24 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 
 	function add_hooks()
 	{
-		if (defined('WP_USE_THEMES') && !is_admin() && 'yes' == $this->options['enable_auto'])
+		if (!is_admin() && 'yes' == $this->options['enable_auto'])
 		{
 			add_filter('print_styles_array', array($this, 'minify_styles'));
 			add_filter('print_scripts_array', array($this, 'minify_scripts'));
 			add_action('wp_head', array($this, 'print_styles'), 8);
 			add_action('wp_head', array($this, 'print_media_styles'), 8);
-			add_action('login_head', array($this, 'print_styles'));
-			add_action('wp_head', array($this, 'print_head_scripts'), 9);
-			/*add_action('login_enqueue_scripts', array($this, 'print_head_scripts'));*/
+			add_action('wp_head', array($this, 'print_dynamic_styles'), 8);
+			add_action('wp_head', array($this, 'print_header_scripts'), 9);
+			add_action('wp_head', array($this, 'print_dynamic_header_scripts'), 9);
 			add_action('wp_footer', array($this, 'print_footer_scripts'));
+			add_action('wp_footer', array($this, 'print_dynamic_footer_scripts'));
+			add_action('login_head', array($this, 'print_styles'));
+			add_action('login_head', array($this, 'print_media_styles'));
+			add_action('login_head', array($this, 'print_dynamic_styles'));
+			add_action('login_head', array($this, 'print_header_scripts'));
+			add_action('login_head', array($this, 'print_dynamic_header_scripts'));
+			add_action('login_footer', array($this, 'print_footer_scripts'));
+			add_action('login_footer', array($this, 'print_dynamic_footer_scripts'));
 			add_action('bwp_minify_before_header_scripts', array($this, 'print_header_scripts_l10n'));
 			add_action('bwp_minify_before_footer_scripts', array($this, 'print_footer_scripts_l10n'));
 		}
@@ -312,13 +320,16 @@ if (!empty($page))
 
 	function get_cache_dir($minurl = '')
 	{
+		global $current_blog;
+
 		if (empty($minurl))
 			$minurl = $this->options['input_minurl'];
 		$temp = @parse_url($minurl);
 		$site_url = $temp['scheme'] . '://' . $temp['host'];
 		$guess_cache = str_replace($site_url, '', $minurl);
 		// @since 1.0.1
-		$guess_cache = substr($guess_cache, 0, -4);
+		$multisite_path = (isset($current_blog->path) && '/' != $current_blog->path) ? $current_blog->path : '';
+		$guess_cache = str_replace($multisite_path, '', dirname($guess_cache));
 		$guess_cache = trailingslashit($_SERVER['DOCUMENT_ROOT']) . trim($guess_cache, '/') . '/cache/';
 		return apply_filters('bwp_minify_cache_dir', str_replace('\\', '/', $guess_cache));
 	}
@@ -326,8 +337,8 @@ if (!empty($page))
 	function parse_positions()
 	{
 		$positions = array(
-			'header' => $this->options['input_header'],
-			'footer' => $this->options['input_footer'],
+			'header' 	=> $this->options['input_header'],
+			'footer' 	=> $this->options['input_footer'],
 			'direct'	=> $this->options['input_direct'],
 			'ignore'	=> $this->options['input_ignore']
 		);
@@ -388,6 +399,14 @@ if (!empty($page))
 			return true;
 	}
 
+	function ignores_style($handle, $temp, $deps)
+	{
+		if (!is_array($deps) || 0 == sizeof($deps))
+			$temp[] = $handle;
+		else
+			$this->dynamic_styles[] = $handle;
+	}
+
 	/**
 	 * Check if a sciprt has been localized using wp_localize_script()
 	 *
@@ -427,9 +446,12 @@ if (!empty($page))
 	 *
 	 * @since 1.0.3
 	 */
-	function is_source_valid($src = '')
+	function is_source_static($src = '')
 	{
-		// Sources that contain ?, =, & will be invalid
+		// Source that doesn't have .css or .js extesion is dynamic
+		if (!preg_match('#[^,]+\.(css|js)$#ui', $src))
+			return false;
+		// Source that contains ?, =, & is dynamic
 		if (strpos($src, '?') === false && strpos($src, '=') === false && strpos($src, '&') === false)
 			return true;
 		return false;
@@ -440,22 +462,36 @@ if (!empty($page))
 	 */
 	function process_media_source($src = '')
 	{
-		//$src = strtolower($src);
-		// remove siteurl in the source if necessary
-		$src = str_replace(get_option('siteurl'), '', $src);
+		// Absolute url
+		if (false !== strpos($src, 'http'))
+			$src = $this->base . str_replace(get_option('siteurl'), '', $src);
+		// Relative absolute url from root
+		else if ('/' === substr($src, 0, 1))
+			// Add base for wp-includes directory
+			if (false !== strpos($src, 'wp-includes'))
+				$src = $this->base . $src;
 		// @since 1.0.3
 		$src = str_replace('./', '/', $src);
 		$src = str_replace('\\', '/', $src);
 		$src = preg_replace('#[\/]{2,}#iu', '/', $src);
 		$src = ltrim($src, '/');
-		return $src;
+		return esc_attr($src);
 	}
 
-	function append_minify_string(&$media = array(), &$count = 0, $src = '', $done = false, $parent = false)
+	function is_added($src, $type = 'scripts')
+	{
+		$media = ('scripts' == $type) ? array_merge($this->header_scripts, $this->footer_scripts) : $this->styles;
+		foreach ($media as $media_string)
+			if (in_array($src, $media_string))
+				return true;
+		return false;
+	}
+
+	function append_minify_string(&$media = array(), &$count = 0, $src = '', $done = false, $parent = false, $type = 'scripts')
 	{
 		$current_pointer = sizeof($media) - 1;
 		// Don't append if already added
-		if (!in_array($src, $media[$current_pointer]))
+		if (!$this->is_added($src, $type))
 			$media[$current_pointer][] = $src;
 		if (false == $parent && $this->options['input_maxfiles'] <= $count || true == $done)
 		{
@@ -471,10 +507,9 @@ if (!empty($page))
 		if (empty($string))
 			return '';
 
-		$base = (!empty($this->base)) ? '&amp;b=' . $this->base : '';
 		$buster = (!empty($this->buster)) ? '&amp;ver=' . $this->buster : '';
 
-		return trailingslashit($this->options['input_minurl']) . '?f=' . $string . $base . $buster;
+		return trailingslashit($this->options['input_minurl']) . '?f=' . $string . $buster;
 	}
 
 	function get_minify_tag($string, $type, $media = '')
@@ -541,6 +576,7 @@ if (!empty($page))
 		$temp = array();
 		$this->print_positions['style_ignore'] = apply_filters('bwp_minify_style_ignore', array());
 		$this->print_positions['style_direct'] = apply_filters('bwp_minify_style_direct', array('admin-bar'));
+		$this->print_positions['style_allowed'] = apply_filters('bwp_minify_allowed_styles', 'all');
 
 		foreach ($todo as $key => $handle)
 		{
@@ -549,21 +585,34 @@ if (!empty($page))
 			// Also do not proceed if we can not print any more (except for login page)
 			$the_style = $wp_styles->registered[$handle];
 			$src = $the_style->src;
-			// check for is_bool @since 1.0.2
-			if ($this->is_in($handle, 'style_ignore') || is_bool($src) || !$this->is_source_valid($src))
-				$temp[] = $handle;
+			$ignore = false;
+			// Check for is_bool @since 1.0.2
+			if ($this->is_in($handle, 'style_ignore') || is_bool($src))
+				$ignore = true;
+			else if (!$this->is_source_static($src))
+				$ignore = true;
+			// If style handle is not allowed
+			else if ('all' != $this->print_positions['style_allowed'] && !$this->is_in($handle, 'style_allowed'))
+				$ignore = true;
 			else if ($this->is_in($handle, 'style_direct'))
 			{
 				$src = $this->process_media_source($src);
 				$the_style->src = $this->get_minify_src($src);
 				$the_style->ver = NULL;
-				$temp[] = $handle;
+				$ignore = true;
 			}
 			else if ((has_action('login_head') || true == $this->printable) && !empty($src) && $this->is_local($src))
 			{
 				$src = $this->process_media_source($src);
-				// If this style has a different media type rather than 'all' (or not set),
-				// we will have to add it to append it in other strings
+				// If styles have been printed, ignore this style
+				if (did_action('bwp_minify_after_styles'))
+				{
+					if (!$this->is_added($src, 'styles'))
+					$temp[] = $handle;
+					continue;
+				}
+				// If this style has a different media type rather than 'all',
+				// we will have to append it to other strings
 				if (isset($the_style->args) && 'all' != $the_style->args)
 				{
 					$media = $the_style->args;
@@ -583,18 +632,21 @@ if (!empty($page))
 				else
 				{
 					$queued++;
-					$this->append_minify_string($this->styles, $queued, $src, $count == $total, true);
+					$this->append_minify_string($this->styles, $queued, $src, $count == $total, true, 'styles');
 					// If this style has support for rtl language and the locale is rtl, 
 					// we will have to append the rtl stylesheet also
 					if ('rtl' === $wp_styles->text_direction && isset($the_style->extra['rtl']) && $the_style->extra['rtl'])
-						$this->append_minify_string($this->styles, $queued, $this->rtl_css_href($handle), $count == $total);
+						$this->append_minify_string($this->styles, $queued, $this->rtl_css_href($handle), $count == $total, false, 'styles');
 				}
 			}
 			else
-				$temp[] = $handle;
+				$this->ignores_style($handle, &$temp, $the_style->deps);
+
+			if (true == $ignore)
+				$this->ignores_style($handle, &$temp, $the_style->deps);
 		}
 
-		$this->printable = false;
+		//$this->printable = false;
 
 		return $temp;
 	}
@@ -634,6 +686,24 @@ if (!empty($page))
 		do_action('bwp_minify_after_media_styles');
 	}
 
+	function print_dynamic_styles()
+	{
+		global $wp_styles;
+
+		foreach ($this->dynamic_styles as $handle)
+			$wp_styles->do_item($handle);
+	}
+
+	function ignores_script($handle, $temp, $deps, $type = 'header')
+	{
+		if (!is_array($deps) || 0 == sizeof($deps))
+			$temp[] = $handle;
+		else if ('header' == $type)
+			$this->header_dynamic[] = $handle;
+		else if ('footer' == $type)
+			$this->footer_dynamic[] = $handle;
+	}
+
 	/**
 	 * Loop through current todo array to build our minify string (min/?f=script1.js,script2.js)
 	 *
@@ -649,10 +719,13 @@ if (!empty($page))
 		if (1 == sizeof($todo) && isset($todo[0]) && 'l10n' == $todo[0])
 			return array();
 
+		// @since 1.0.5
+		$this->print_positions['allowed'] = apply_filters('bwp_minify_allowed_scripts', 'all');
+
 		$header_count = 0;
 		$footer_count = 0;
 		$count_f = 0; $count_h = 0;
-				
+
 		$total = sizeof($todo);
 		$total_footer = 0;
 		foreach ($wp_scripts->groups as $count)
@@ -673,17 +746,31 @@ if (!empty($page))
 
 		foreach ($todo as $key => $script_handle)
 		{
+			$the_script = $wp_scripts->registered[$script_handle];
 			// Take the src from registred scripts, do not proceed if the src is external
-			$src = $wp_scripts->registered[$script_handle]->src;
-			if (!empty($src) && $this->is_source_valid($src) && $this->is_local($src))
+			$src = $the_script->src;
+			$expected_in_footer = (isset($wp_scripts->groups[$script_handle]) && 0 < $wp_scripts->groups[$script_handle]) ? true : false;
+			$ignore_type = ($expected_in_footer) ? 'footer' : 'header';
+			if (!empty($src) && $this->is_source_static($src) && $this->is_local($src))
 			{
 				$src = $this->process_media_source($src);
+				// If this script is not allowed
+				if ('all' != $this->print_positions['allowed'] && !$this->is_in($script_handle, 'allowed'))
+					$this->ignores_script($script_handle, &$temp, $the_script->deps, $ignore_type);
 				// If this script does not belong to 'direct' or 'ignore' list
-				if (!$this->is_in($script_handle, 'ignore') && !$this->is_in($script_handle, 'direct'))
+				else if (!$this->is_in($script_handle, 'ignore') && !$this->is_in($script_handle, 'direct'))
 				{
 					// If this script belongs to footer (logically or 'intentionally') and is not 'forced' to be in header
-					if (!$this->is_in($script_handle, 'header') && ($this->is_in($script_handle, 'footer') || (isset($wp_scripts->groups[$script_handle]) && 0 < $wp_scripts->groups[$script_handle])))
+					if (!$this->is_in($script_handle, 'header') && ($this->is_in($script_handle, 'footer') || $expected_in_footer))
 					{
+						// If footer scripts have already been printed, ignore this script
+						if (did_action('bwp_minify_printed_footer_scripts'))
+						{
+							if (!$this->is_added($src))
+								$temp[] = $script_handle;
+							continue;
+						}
+
 						$count_f++; $footer_count++;
 						$this->append_minify_string($this->footer_scripts, $footer_count, $src, $count_f == $total_footer);
 						if (true == $this->is_l10n($script_handle))
@@ -691,14 +778,21 @@ if (!empty($page))
 					}
 					else if (true == $this->queueable)
 					{
+						// If header scripts have already been printed, ignore this script
+						if (did_action('bwp_minify_printed_header_scripts'))
+						{
+							if (!$this->is_added($src))
+								$temp[] = $script_handle;
+							continue;
+						}
+
 						$count_h++; $header_count++;
 						$this->append_minify_string($this->header_scripts, $header_count, $src, $count_h == $total - $total_footer);
 						if (true == $this->is_l10n($script_handle))
 							$this->header_l10n[] = $script_handle;							
 					}
 					else
-						$temp[] = $script_handle;
-					
+						$this->ignores_script($script_handle, &$temp, $the_script->deps, $ignore_type);				
 				}
 				else
 				{
@@ -708,14 +802,15 @@ if (!empty($page))
 						$wp_scripts->registered[$script_handle]->src = $this->get_minify_src($src);
 						$wp_scripts->registered[$script_handle]->ver = NULL;
 					}
-					$temp[] = $script_handle;
+
+					$this->ignores_script($script_handle, &$temp, $the_script->deps, $ignore_type);
 				}
 			}
 			else
-				$temp[] = $script_handle;
+				$this->ignores_script($script_handle, &$temp, $the_script->deps, $ignore_type);
 		}
-	
-		$this->queueable = false;
+
+		//$this->queueable = false;
 
 		return $temp;
 	}
@@ -725,12 +820,12 @@ if (!empty($page))
 	 *
 	 * Use actions provided to add other things before or after the output.
 	 */	
-	function print_scripts($scripts, $action)
+	function print_scripts($action = 'header')
 	{
 		do_action('bwp_minify_before_' . $action . '_scripts');
 
 		// Print script tags
-		$scripts = (array) $scripts;
+		$scripts = ('header' == $action) ? $this->header_scripts : $this->footer_scripts;
 		foreach ($scripts as $script_array)
 		{
 			if (0 < sizeof($script_array))
@@ -740,14 +835,35 @@ if (!empty($page))
 		do_action('bwp_minify_after_' . $action . '_scripts');
 	}
 
-	function print_head_scripts()
+	function print_header_scripts()
 	{
-		$this->print_scripts($this->header_scripts, 'header');
+		do_action('bwp_minify_printed_header_scripts');
+		$this->print_scripts();
 	}
 
 	function print_footer_scripts()
 	{
-		$this->print_scripts($this->footer_scripts, 'footer');
+		do_action('bwp_minify_printed_footer_scripts');
+		$this->print_scripts('footer');
+	}
+
+	function print_dynamic_scripts($type = 'header')
+	{
+		global $wp_scripts;
+
+		$scripts = ('header' == $type) ? $this->header_dynamic : $this->footer_dynamic;
+		foreach ($scripts as $handle)
+			$wp_scripts->do_item($handle);
+	}
+
+	function print_dynamic_header_scripts()
+	{
+		$this->print_dynamic_scripts();
+	}
+
+	function print_dynamic_footer_scripts()
+	{
+		$this->print_dynamic_scripts('footer');
 	}
 
 	function print_scripts_l10n($scripts)
