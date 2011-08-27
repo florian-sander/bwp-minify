@@ -4,7 +4,7 @@ Donate link: http://betterwp.net/wordpress-plugins/bwp-minify/
 Tags: CSS, javascript, JS, minify, minification, optimization, optimize
 Requires at least: 2.8
 Tested up to: 3.2.1
-Stable tag: 1.0.5
+Stable tag: 1.0.6
 
 Allows you to minify your CSS and JS files for faster page loading for visitors.
 
@@ -55,6 +55,14 @@ The cache folder must be writable, please visit [Plugin's Official Page](http://
 1. Changing the Minify URL, now one can have a shorter and nicer URL ;)
 
 == Changelog ==
+
+= 1.0.6 =
+* Added four more hooks for theme developers to fully control how scripts and styles should be enqueued and minified.
+* Changed the Min URL hook a bit so themes can actually filter it.
+* Added support for plugins or themes that try to enqueue and print script using the `wp_footer` action instead of the `init` action. Plugins like 'Jetpack by WordPress.com' should be working correctly now.
+* Other improvements made to the positioning of styles and scripts.
+
+**Enjoy BWP Minify!**
 
 = 1.0.5 =
 * Added support for theme developers who would like to integreate BWP Minify into their themes 
