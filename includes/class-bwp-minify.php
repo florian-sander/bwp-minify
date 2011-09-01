@@ -74,7 +74,7 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 	/**
 	 * Constructor
 	 */	
-	function __construct($version = '1.0.6')
+	function __construct($version = '1.0.7')
 	{
 		// Plugin's title
 		$this->plugin_title = 'BetterWP Minify';
@@ -406,7 +406,7 @@ if (!empty($page))
 
 	function ignores_style($handle, $temp, $deps)
 	{
-		if (!is_array($deps) || 0 == sizeof($deps) || $this->are_deps_added($handle, ''))
+		if (!is_array($deps) || 0 == sizeof($deps) || 'wp' == $this->are_deps_added($handle, ''))
 		{
 			$temp[] = $handle;
 			$this->wp_styles_done[] = $handle;
@@ -489,18 +489,11 @@ if (!empty($page))
 	/**
 	 *  Have dependencies for the style / script been added / printed?
 	 */
-	function are_deps_added($handle, $type = '')
+	function are_deps_added($handle, $type = '', $media = NULL)
 	{
 		global $wp_styles, $wp_scripts;
 
-		$media = (empty($type)) ? $this->styles : NULL;
-
-		if (!isset($media))
-		{
-			$media 	= ('header' == $type) ? $this->header_scripts : $this->footer_scripts;
-			$type  	= 'scripts';
-		}
-
+		$type 		= (!empty($type)) ? 'scripts' : '';
 		$wp_media 	= ('scripts' == $type) ? $wp_scripts : $wp_styles;
 		$deps		= $wp_media->registered[$handle]->deps;
 
@@ -509,11 +502,12 @@ if (!empty($page))
 			$dep_src = $wp_media->registered[$dep]->src;
 			$dep_src = ($this->is_local($dep_src)) ? $this->process_media_source($dep_src) : $dep_src;
 			$dep_handle = ($this->is_local($dep_src)) ? '' : $dep;
-			if ($this->is_added($dep_src, $type, $dep_handle))
-				return true;
+			$is_added = $this->is_added($dep_src, $type, $dep_handle, $media);
+			if (!$is_added)
+				return false;
 		}
 
-		return false;
+		return $is_added;
 	}
 
 	function is_added($src, $type = 'scripts', $handle = '', $media = NULL)
@@ -523,13 +517,13 @@ if (!empty($page))
 		// Loop through media array to find the source
 		foreach ($media as $media_string)
 			if (in_array($src, $media_string))
-				return true;
+				return 'min';
 		// Also check extra media if needed
 		if (!empty($handle))
 		{
 			$extra_media = ('scripts' == $type) ? array_merge($this->header_dynamic, $this->footer_dynamic, $this->wp_scripts_done) : array_merge($this->dynamic_styles, $this->wp_styles_done);
 			if (in_array($handle, $extra_media))
-				return true;
+				return 'wp';
 		}		
 		return false;
 	}
@@ -745,7 +739,10 @@ if (!empty($page))
 	{
 		global $wp_scripts;
 
-		if (!is_array($deps) || 0 == sizeof($deps) || $this->are_deps_added($handle, $type))
+		$are_deps_added = $this->are_deps_added($handle, $type);
+		$wp = ('wp' == $are_deps_added || ('min' == $this->are_deps_added($handle, $type, $this->header_scripts) && 'footer' == $type && did_action('bwp_minify_printed_header_scripts'))) ? true : false;
+
+		if (!is_array($deps) || 0 == sizeof($deps) || $wp)
 		{
 			$temp[] = $handle;
 			$this->wp_scripts_done[] = $handle;
