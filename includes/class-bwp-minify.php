@@ -59,7 +59,7 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 	/**
 	 * Queued styles to be printed
 	 */
-	var $styles = array(array()), $media_styles = array('print' => array()), $dynamic_styles = array(), $wp_styles_done;
+	var $styles = array(array()), $media_styles = array('print' => array()), $dynamic_styles = array(), $wp_styles_done = array();
 	 
 	/**
 	 * Are we still able to print styles?
