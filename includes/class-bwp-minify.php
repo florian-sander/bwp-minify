@@ -59,7 +59,7 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 	/**
 	 * Queued styles to be printed
 	 */
-	var $styles = array(array()), $media_styles = array('print' => array()), $dynamic_styles = array(), $wp_styles_done = array();
+	var $styles = array(array()), $media_styles = array('print' => array()), $dynamic_styles = array(), $wp_styles_done;
 	 
 	/**
 	 * Are we still able to print styles?
@@ -74,7 +74,7 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 	/**
 	 * Constructor
 	 */	
-	function __construct($version = '1.0.7')
+	function __construct($version = '1.0.8')
 	{
 		// Plugin's title
 		$this->plugin_title = 'BetterWP Minify';
@@ -475,8 +475,8 @@ if (!empty($page))
 			$src = $this->base . str_replace(get_option('siteurl'), '', $src);
 		// Relative absolute url from root
 		else if ('/' === substr($src, 0, 1))
-			// Add base for wp-includes directory
-			if (false !== strpos($src, 'wp-includes'))
+			// Add base for wp-includes and wp-admin directory
+			if (false !== strpos($src, 'wp-includes') || false !== strpos($src, 'wp-admin'))
 				$src = $this->base . $src;
 		// @since 1.0.3
 		$src = str_replace('./', '/', $src);

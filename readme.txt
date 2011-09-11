@@ -4,7 +4,7 @@ Donate link: http://betterwp.net/wordpress-plugins/bwp-minify/
 Tags: CSS, javascript, JS, minify, minification, optimization, optimize
 Requires at least: 2.8
 Tested up to: 3.2.1
-Stable tag: 1.0.7
+Stable tag: 1.0.8
 
 Allows you to minify your CSS and JS files for faster page loading for visitors.
 
@@ -55,6 +55,9 @@ The cache folder must be writable, please visit [Plugin's Official Page](http://
 1. Changing the Minify URL, now one can have a shorter and nicer URL ;)
 
 == Changelog ==
+
+= 1.0.8 =
+* Hot fix for 1.0.7, which resolves the broken CSS issues for the wp-login page when you install WordPress in a sub-directory.
 
 = 1.0.7 =
 * Hot fix for 1.0.6, which resolves some compatibility issues with certain plugins.
