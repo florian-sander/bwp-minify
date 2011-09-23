@@ -59,7 +59,7 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 	/**
 	 * Queued styles to be printed
 	 */
-	var $styles = array(array()), $media_styles = array('print' => array()), $dynamic_styles = array(), $wp_styles_done;
+	var $styles = array(array()), $media_styles = array('print' => array()), $dynamic_styles = array(), $wp_styles_done = array();
 	 
 	/**
 	 * Are we still able to print styles?
@@ -74,7 +74,7 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 	/**
 	 * Constructor
 	 */	
-	function __construct($version = '1.0.8')
+	function __construct($version = '1.0.9')
 	{
 		// Plugin's title
 		$this->plugin_title = 'BetterWP Minify';
@@ -681,6 +681,7 @@ if (!empty($page))
 				}
 			}
 			else
+				// error: Call-time pass-by-reference deprecated
 				$this->ignores_style($handle, &$temp, $the_style->deps);
 
 			if (true == $ignore)
