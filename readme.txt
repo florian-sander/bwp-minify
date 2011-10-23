@@ -10,6 +10,8 @@ Allows you to minify your CSS and JS files for faster page loading for visitors.
 
 == Description ==
 
+Support for this plugin has been moved to [the BWP Community](http://betterwp.net/community/)!
+
 Allows you to minify your CSS and JS files for faster page loading for visitors. This plugin uses the PHP library [Minify](http://code.google.com/p/minify/) and relies on WordPress's enqueueing system rather than the output buffer (will not break your website in most cases). This plugin is very customizable and easy to use.
 
 **Some Features**
