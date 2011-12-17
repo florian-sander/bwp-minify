@@ -28,7 +28,7 @@ Allows you to minify your CSS and JS files for faster page loading for visitors.
 **Languages**
 
 * English (default)
-* Romanian (ro_RO) - Thanks to [Luke Tyler, International Calling Cards](www.enjoyprepaid.com)!
+* Romanian (ro_RO) - Thanks to [Luke Tyler, International Calling Cards](http://www.enjoyprepaid.com)!
 
 Please [help translate](http://betterwp.net/wordpress-tips/create-pot-file-using-poedit/) this plugin!
 
