@@ -3,14 +3,12 @@ Contributors: OddOneOut
 Donate link: http://betterwp.net/wordpress-plugins/bwp-minify/
 Tags: CSS, javascript, JS, minify, minification, optimization, optimize
 Requires at least: 2.8
-Tested up to: 3.2.1
-Stable tag: 1.0.9
+Tested up to: 3.3
+Stable tag: 1.0.10
 
 Allows you to minify your CSS and JS files for faster page loading for visitors.
 
 == Description ==
-
-**Support for this plugin has been moved to [the BWP Community](http://betterwp.net/community/)!**
 
 Allows you to minify your CSS and JS files for faster page loading for visitors. This plugin uses the PHP library [Minify](http://code.google.com/p/minify/) and relies on WordPress's enqueueing system rather than the output buffer (will not break your website in most cases). This plugin is very customizable and easy to use.
 
@@ -29,7 +27,10 @@ Allows you to minify your CSS and JS files for faster page loading for visitors.
 
 **Languages**
 
-* This plugin is currently available only in English. Please [help translate](http://betterwp.net/wordpress-tips/create-pot-file-using-poedit/) it!
+* English (default)
+* Romanian (ro_RO) - Thanks to [Luke Tyler, International Calling Cards](www.enjoyprepaid.com)!
+
+Please [help translate](http://betterwp.net/wordpress-tips/create-pot-file-using-poedit/) this plugin!
 
 **Important Notes**
 
@@ -57,6 +58,15 @@ The cache folder must be writable, please visit [Plugin's Official Page](http://
 1. Changing the Minify URL, now one can have a shorter and nicer URL ;)
 
 == Changelog ==
+
+= 1.0.10 =
+* Fixed two possible PHP notices when using root-relative paths as Minify URL. Thanks to [Marcus](http://marcuspope.com/)!
+* Fixed wrongly closed HTML `<link>` tags.
+* Fixed a bug that breaks the dynamic JS file enqueued by Mingle plugin.
+* Fixed an incompatibility issue with WP Download Monitor.
+* Fixed an incompatibility issue with Geo-Mashup, thanks to JeremyCherfas for reporting!
+* Added support for the new script localization function introduced in WordPress 3.3. Thanks to **workshopshed** for reporting!
+* Added Romanian translation, thanks to Luke Tyler!
 
 = 1.0.9 =
 * Fixed a possible PHP warning about an argument not being an array.

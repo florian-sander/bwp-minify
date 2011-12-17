@@ -74,7 +74,7 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 	/**
 	 * Constructor
 	 */	
-	function __construct($version = '1.0.9')
+	function __construct($version = '1.0.10')
 	{
 		// Plugin's title
 		$this->plugin_title = 'BetterWP Minify';
@@ -126,12 +126,28 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 		$this->buster = $this->get_buster($this->options['select_buster_type']);
 	}
 
+	private static function is_loadable()
+	{
+		// Ignore Geomashup for now
+		if (!empty($_GET['geo_mashup_content']) && 'render-map' == $_GET['geo_mashup_content'])
+			return false;
+		return true;
+	}
+
 	function add_hooks()
 	{
-		if (!is_admin() && 'yes' == $this->options['enable_auto'])
+		// Certain plugins use a single file to show contents, which doesn't make use of wp_head and wp_footer action
+		if (!self::is_loadable())
+			return;
+
+		// Allow other developers to use BWP Minify inside wp-admin, be very careful :-)
+		$allowed_in_admin = apply_filters('bwp_minify_allowed_in_admin', false);
+
+		if ((!is_admin() || (is_admin() && $allowed_in_admin)) && 'yes' == $this->options['enable_auto'])
 		{
 			add_filter('print_styles_array', array($this, 'minify_styles'));
 			add_filter('print_scripts_array', array($this, 'minify_scripts'));
+			// Hook to common head and footer actions
 			add_action('wp_head', array($this, 'print_styles'), 8);
 			add_action('wp_head', array($this, 'print_media_styles'), 8);
 			add_action('wp_head', array($this, 'print_dynamic_styles'), 8);
@@ -146,6 +162,12 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 			add_action('login_head', array($this, 'print_dynamic_header_scripts'));
 			add_action('login_footer', array($this, 'print_footer_scripts'), 100);
 			add_action('login_footer', array($this, 'print_dynamic_footer_scripts'), 100);
+			// Add support for plugins that uses admin_head action outside wp-admin - @since 1.0.10
+			add_action('admin_head', array($this, 'print_styles'), 8);
+			add_action('admin_head', array($this, 'print_media_styles'), 8);
+			add_action('admin_head', array($this, 'print_dynamic_styles'), 8);
+			add_action('admin_head', array($this, 'print_header_scripts'), 9);
+			add_action('admin_head', array($this, 'print_dynamic_header_scripts'), 9);
 			add_action('bwp_minify_before_header_scripts', array($this, 'print_header_scripts_l10n'));
 			add_action('bwp_minify_before_footer_scripts', array($this, 'print_footer_scripts_l10n'), 100);
 		}
@@ -330,8 +352,13 @@ if (!empty($page))
 		if (empty($minurl))
 			$minurl = $this->options['input_minurl'];
 		$temp = @parse_url($minurl);
-		$site_url = $temp['scheme'] . '://' . $temp['host'];
-		$guess_cache = str_replace($site_url, '', $minurl);
+		if (isset($temp['scheme']) && isset($temp['host']))
+		{
+			$site_url = $temp['scheme'] . '://' . $temp['host'];
+			$guess_cache = str_replace($site_url, '', $minurl);
+		}
+		else
+			$guess_cache = $minurl;
 		// @since 1.0.1
 		$multisite_path = (isset($current_blog->path) && '/' != $current_blog->path) ? $current_blog->path : '';
 		$guess_cache = str_replace($multisite_path, '', dirname($guess_cache));
@@ -423,7 +450,8 @@ if (!empty($page))
 	function is_l10n($handle)
 	{
 		global $wp_scripts;
-		if (isset($wp_scripts->registered[$handle]->extra['l10n']))
+		// Since 3.3, 'l10n' has been changed into 'data'
+		if (isset($wp_scripts->registered[$handle]->extra['l10n']) || isset($wp_scripts->registered[$handle]->extra['data']))
 			return true;
 		return false;
 	}
@@ -496,6 +524,7 @@ if (!empty($page))
 		$type 		= (!empty($type)) ? 'scripts' : '';
 		$wp_media 	= ('scripts' == $type) ? $wp_scripts : $wp_styles;
 		$deps		= $wp_media->registered[$handle]->deps;
+		$return		= 'wp';
 
 		foreach ($deps as $dep)
 		{
@@ -503,11 +532,13 @@ if (!empty($page))
 			$dep_src = ($this->is_local($dep_src)) ? $this->process_media_source($dep_src) : $dep_src;
 			$dep_handle = ($this->is_local($dep_src)) ? '' : $dep;
 			$is_added = $this->is_added($dep_src, $type, $dep_handle, $media);
+			if ('min' == $is_added)
+				$return = 'min';
 			if (!$is_added)
 				return false;
 		}
 
-		return $is_added;
+		return $return;
 	}
 
 	function is_added($src, $type = 'scripts', $handle = '', $media = NULL)
@@ -566,11 +597,11 @@ if (!empty($page))
 			
 			case 'style':
 			default:			
-				return "<link rel='stylesheet' type='text/css' media='all' href='" . $this->get_minify_src($string) . "'></link>\n";
+				return "<link rel='stylesheet' type='text/css' media='all' href='" . $this->get_minify_src($string) . "' />\n";
 			break;
 
 			case 'media':
-				return "<link rel='stylesheet' type='text/css' media='$media' href='" . $this->get_minify_src($string) . "'></link>\n";
+				return "<link rel='stylesheet' type='text/css' media='$media' href='" . $this->get_minify_src($string) . "' />\n";
 			break;
 		}
 	}
@@ -652,9 +683,10 @@ if (!empty($page))
 					$temp[] = $handle;
 					continue;
 				}
-				// If this style has a different media type rather than 'all',
+				// If this style has a different media type rather than 'all', '',
 				// we will have to append it to other strings
-				if (isset($the_style->args) && 'all' != $the_style->args)
+				$the_style->args = (isset($the_style->args)) ? trim($the_style->args) : '';
+				if (!empty($the_style->args) && 'all' != $the_style->args)
 				{
 					$media = $the_style->args;
 					if (!isset($this->media_styles[$media]))
@@ -758,7 +790,7 @@ if (!empty($page))
 	 * Loop through current todo array to build our minify string (min/?f=script1.js,script2.js)
 	 *
 	 * If the number of scripts reaches a limit (by default the limit is 10) this plugin will split the minify string 
-	 * into an appropriate number of <script> tags. This is only to beautify your minify strings (or else they might get too long).
+	 * into an appropriate number of <script> tags. This is to beautify your minify strings (or else they might get too long).
 	 * If you don't like such behaviour, change the limit to something higher, e.g. 50.
 	 */
 	function minify_scripts($todo)
