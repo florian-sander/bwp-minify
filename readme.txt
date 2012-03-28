@@ -3,8 +3,8 @@ Contributors: OddOneOut
 Donate link: http://betterwp.net/wordpress-plugins/bwp-minify/
 Tags: CSS, javascript, JS, minify, minification, optimization, optimize
 Requires at least: 2.8
-Tested up to: 3.3
-Stable tag: 1.0.10
+Tested up to: 3.3.1
+Stable tag: 1.2.0
 
 Allows you to minify your CSS and JS files for faster page loading for visitors.
 
@@ -16,6 +16,7 @@ Allows you to minify your CSS and JS files for faster page loading for visitors.
 
 * Uses the enqueueing system of WordPress which improves compatibility with other plugins and themes
 * Allows you to customize all minify strings
+* Allows you to change various Minify configuration options by editing the config file directly
 * Offers various way to add a cache buster to your minify string
 * Gives you total control over how this plugin minifies your scripts
 * Supports script localization (`wp_localize_script()`)
@@ -23,18 +24,27 @@ Allows you to minify your CSS and JS files for faster page loading for visitors.
 * Supports media-specific stylesheets (e.g. 'screen', 'print', etc.)
 * Supports conditional stylesheets (e.g. `<!--[if lt IE 7]>`)
 * Provides hooks for further customization
-* WordPress Multi-site compatible (not tested with WPMU)
+* WordPress Multi-site compatible
+
+**Major Features that are scheduled for 1.3.0**
+
+* Automatic script/style handle detection: you will no longer have to look for script/style handles, all will be put in a convenient dropdown box for you to choose!
+* Friendly Minify URL: no more question mark!
+* Role-based Minification: If you're an admin and would like to debug your scripts, this option is definitely useful!
+
+**Important Notes**
+
+If you want to make the most out of BWP Minify, it is highly recommended that you give this [BWP Minify Advanced Customizations](http://betterwp.net/wordpress-plugins/bwp-minify/#advanced_customization) guide a read!
 
 **Languages**
 
 * English (default)
-* Romanian (ro_RO) - Thanks to [Luke Tyler, International Calling Cards](http://www.enjoyprepaid.com)!
+* Romanian (ro_RO) - Thanks to [Luke Tyler, International Calling Cards](www.enjoyprepaid.com)!
+* Turkish (tr_TR) - Thanks to Hakan E
+* French (fr_FR) - Thanks to Sebastien 
+* Italian (it_IT) - Thanks to Gabriele - http://cookspot.it
 
 Please [help translate](http://betterwp.net/wordpress-tips/create-pot-file-using-poedit/) this plugin!
-
-**Important Notes**
-
-The cache folder must be writable, please visit [Plugin's Official Page](http://betterwp.net/wordpress-plugins/bwp-minify/) for more information!
 
 **Get in touch**
 
@@ -45,7 +55,7 @@ The cache folder must be writable, please visit [Plugin's Official Page](http://
 
 1. Upload the `bwp-minify` folder to the `/wp-content/plugins/` directory
 2. Activate the plugin through the Plugins menu in WordPress. After activation, you should see a menu of this plugin under Settings.
-3. Configure the plugin, optionally choose a minify URL (ony recommended if you are experienced with URL and server paths), and modify Minify's `config.php` as you please. Please read [here](http://betterwp.net/wordpress-plugins/bwp-minify/#customization) for more information.
+3. Configure the plugin, optionally choose a minify URL (ony recommended if you are experienced with URL and server paths), and modify Minify's `config.php` as you please. Please read [here](http://betterwp.net/wordpress-plugins/bwp-minify/#advanced_customization) for more information.
 4. Make sure the `cache` folder is writable, by `CHMOD` it to either `755` or `777`, depending on which one will work for you.
 5. Enjoy!
 
@@ -58,6 +68,26 @@ The cache folder must be writable, please visit [Plugin's Official Page](http://
 1. Changing the Minify URL, now one can have a shorter and nicer URL ;)
 
 == Changelog ==
+
+= 1.2.0 =
+* New Features:
+	* Added a Flush cache button
+	* Split auto minify option into two options, auto minify js and auto minify css
+	* Added a new buster: theme version - thanks to Jon for the patch!
+* Bugs fixed:
+	* Fixed a bug that broke minify strings if current port is not 80
+	* Fixed two bugs that broke minify strings when `HTTPS` is enabled
+	* Fixed `wp_localize_script` duplication issue
+	* Fixed media style duplication issue
+	* Fixed a deprecate notice caused by the use of `print_scripts_l10n`
+	* Fixed some script dependency issue when you choose to ignore certain scripts
+* Enhancements:
+	* Increased default cache time to something longer (2 hours)
+	* Cache directory can now be edited in admin area. Please note that changing the cache directory is still a two-step process, which has been described in great details [here](http://betterwp.net/wordpress-plugins/bwp-minify/#cache_directory).
+* Misc:
+	* Added a Turkish translation - Thanks to Hakan E.
+	* Added a French translation - Thanks to Sebastien
+	* Added an Italian translation - Thanks to Gabriele
 
 = 1.0.10 =
 * Fixed two possible PHP notices when using root-relative paths as Minify URL. Thanks to [Marcus](http://marcuspope.com/)!

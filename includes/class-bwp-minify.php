@@ -1,6 +1,6 @@
 <?php
 /**
- * Copyright (c) 2011 Khang Minh <betterwp.net>
+ * Copyright (c) 2012 Khang Minh <betterwp.net>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -74,7 +74,7 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 	/**
 	 * Constructor
 	 */	
-	function __construct($version = '1.0.10')
+	function __construct($version = '1.2.0')
 	{
 		// Plugin's title
 		$this->plugin_title = 'BetterWP Minify';
@@ -89,14 +89,15 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 		$options = array(
 			'input_minurl' => '',
 			'input_cache_dir' => '',
-			'input_maxfiles' => 10,
+			'input_maxfiles' => 20,
 			'input_maxage' => 30,
 			'input_ignore' => '',
 			'input_header' => '',
 			'input_direct' => 'admin-bar',
 			'input_footer' => '',
 			'input_custom_buster' => '',
-			'enable_auto' => 'yes',
+			'enable_min_js' => 'yes',
+			'enable_min_css' => 'yes',
 			'enable_bloginfo' => 'yes',
 			'select_buster_type' => 'none',
 			'select_time_type' => 60
@@ -122,7 +123,7 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 		$this->get_base();
 		$this->ver = get_bloginfo('version');
 		$this->cache = (int) $this->options['input_maxage'] * (int) $this->options['select_time_type'];
-		$this->options['input_cache_dir'] = $this->get_cache_dir();
+		$this->options['input_cache_dir'] = empty($this->options['input_cache_dir']) ? $this->get_cache_dir() : $this->options['input_cache_dir'];
 		$this->buster = $this->get_buster($this->options['select_buster_type']);
 	}
 
@@ -143,33 +144,41 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 		// Allow other developers to use BWP Minify inside wp-admin, be very careful :-)
 		$allowed_in_admin = apply_filters('bwp_minify_allowed_in_admin', false);
 
-		if ((!is_admin() || (is_admin() && $allowed_in_admin)) && 'yes' == $this->options['enable_auto'])
+		if ((!is_admin() || (is_admin() && $allowed_in_admin)))
 		{
-			add_filter('print_styles_array', array($this, 'minify_styles'));
-			add_filter('print_scripts_array', array($this, 'minify_scripts'));
-			// Hook to common head and footer actions
-			add_action('wp_head', array($this, 'print_styles'), 8);
-			add_action('wp_head', array($this, 'print_media_styles'), 8);
-			add_action('wp_head', array($this, 'print_dynamic_styles'), 8);
-			add_action('wp_head', array($this, 'print_header_scripts'), 9);
-			add_action('wp_head', array($this, 'print_dynamic_header_scripts'), 9);
-			add_action('wp_footer', array($this, 'print_footer_scripts'), 100);
-			add_action('wp_footer', array($this, 'print_dynamic_footer_scripts'), 100);
-			add_action('login_head', array($this, 'print_styles'));
-			add_action('login_head', array($this, 'print_media_styles'));
-			add_action('login_head', array($this, 'print_dynamic_styles'));
-			add_action('login_head', array($this, 'print_header_scripts'));
-			add_action('login_head', array($this, 'print_dynamic_header_scripts'));
-			add_action('login_footer', array($this, 'print_footer_scripts'), 100);
-			add_action('login_footer', array($this, 'print_dynamic_footer_scripts'), 100);
-			// Add support for plugins that uses admin_head action outside wp-admin - @since 1.0.10
-			add_action('admin_head', array($this, 'print_styles'), 8);
-			add_action('admin_head', array($this, 'print_media_styles'), 8);
-			add_action('admin_head', array($this, 'print_dynamic_styles'), 8);
-			add_action('admin_head', array($this, 'print_header_scripts'), 9);
-			add_action('admin_head', array($this, 'print_dynamic_header_scripts'), 9);
-			add_action('bwp_minify_before_header_scripts', array($this, 'print_header_scripts_l10n'));
-			add_action('bwp_minify_before_footer_scripts', array($this, 'print_footer_scripts_l10n'), 100);
+			// Minify scripts if needed
+			if ('yes' == $this->options['enable_min_js'])
+			{
+				add_filter('print_scripts_array', array($this, 'minify_scripts'));
+				// Hook to common head and footer actions
+				add_action('wp_head', array($this, 'print_header_scripts'), 9);
+				add_action('wp_head', array($this, 'print_dynamic_header_scripts'), 9);
+				add_action('wp_footer', array($this, 'print_footer_scripts'), 100);
+				add_action('wp_footer', array($this, 'print_dynamic_footer_scripts'), 100);
+				add_action('login_head', array($this, 'print_header_scripts'));
+				add_action('login_head', array($this, 'print_dynamic_header_scripts'));
+				add_action('login_footer', array($this, 'print_footer_scripts'), 100);
+				add_action('login_footer', array($this, 'print_dynamic_footer_scripts'), 100);
+				add_action('admin_head', array($this, 'print_header_scripts'), 9);
+				add_action('admin_head', array($this, 'print_dynamic_header_scripts'), 9);
+				add_action('bwp_minify_before_header_scripts', array($this, 'print_header_scripts_l10n'));
+				add_action('bwp_minify_before_footer_scripts', array($this, 'print_footer_scripts_l10n'), 100);
+			}
+			
+			// Minify styles if needed
+			if ('yes' == $this->options['enable_min_css'])
+			{
+				add_filter('print_styles_array', array($this, 'minify_styles'));
+				add_action('wp_head', array($this, 'print_styles'), 8);
+				add_action('wp_head', array($this, 'print_media_styles'), 8);
+				add_action('wp_head', array($this, 'print_dynamic_styles'), 8);
+				add_action('login_head', array($this, 'print_styles'));
+				add_action('login_head', array($this, 'print_media_styles'));
+				add_action('login_head', array($this, 'print_dynamic_styles'));
+				add_action('admin_head', array($this, 'print_styles'), 8);
+				add_action('admin_head', array($this, 'print_media_styles'), 8);
+				add_action('admin_head', array($this, 'print_dynamic_styles'), 8);
+			}
 		}
 
 		if ('yes' == $this->options['enable_bloginfo'])
@@ -208,15 +217,16 @@ if (!empty($page))
 	if ($page == BWP_MINIFY_OPTION_GENERAL)
 	{
 		$form = array(
-			'items'			=> array('heading', 'checkbox', 'checkbox', 'heading', 'input', 'input', 'input', 'select', 'heading', 'textarea', 'textarea', 'textarea', 'textarea'),
+			'items'			=> array('heading', 'checkbox', 'checkbox', 'checkbox', 'heading', 'input', 'input', 'input', 'select', 'heading', 'textarea', 'textarea', 'textarea', 'textarea'),
 			'item_labels'	=> array
 			(
 				__('General Options', 'bwp-minify'),
-				__('Minify CSS, JS files automatically?', 'bwp-minify'),				
+				__('Minify JS files automatically?', 'bwp-minify'),
+				__('Minify CSS files automatically?', 'bwp-minify'),
 				__('Minify <code>bloginfo()</code> stylesheets?', 'bwp-minify'),
 				__('Minifying Options', 'bwp-minify'),
 				__('Minify URL (double-click to edit)', 'bwp-minify'),
-				__('Cache will be stored in (by default)', 'bwp-minify'),
+				__('Cache directory (double-click to edit)', 'bwp-minify'),
 				__('One minify string will contain', 'bwp-minify'),
 				__('Append the minify string with', 'bwp-minify'),
 				__('Minifying Scripts Options', 'bwp-minify'),
@@ -225,7 +235,7 @@ if (!empty($page))
 				__('Scripts to be minified and then printed separately', 'bwp-minify'),
 				__('Scripts to be ignored (not minified)', 'bwp-minify')
 			),
-			'item_names'	=> array('h1', 'cb1', 'cb2', 'h2', 'input_minurl', 'input_cache_dir', 'input_maxfiles', 'select_buster_type', 'h3', 'input_header', 'input_footer', 'input_direct', 'input_ignore'),
+			'item_names'	=> array('h1', 'cb1', 'cb3', 'cb2', 'h2', 'input_minurl', 'input_cache_dir', 'input_maxfiles', 'select_buster_type', 'h3', 'input_header', 'input_footer', 'input_direct', 'input_ignore'),
 			'heading'			=> array(
 				'h1'	=> '',
 				'h2'	=> __('<em>Options that affect both your stylesheets and scripts.</em>', 'bwp-minify'),
@@ -242,16 +252,18 @@ if (!empty($page))
 					__('Do not append anything', 'bwp-minify') => 'none',
 					__('Cache folder&#8217;s last modified time', 'bwp-minify') => 'mtime',
 					__('Your WordPress&#8217;s current version', 'bwp-minify') => 'wpver',
+					__('Your theme&#8217;s current version', 'bwp-minify') => 'tver',
 					__('A custom number', 'bwp-minify') => 'custom'
 				)
 			),
 			'checkbox'	=> array(
-				'cb1' => array(__('you can still use the template function <code>bwp_minify()</code> if you disable this.', 'bwp-minify') => 'enable_auto'),
+				'cb1' => array(__('you can still use <code>bwp_minify()</code> helper function if you disable this.', 'bwp-minify') => 'enable_min_js'),
+				'cb3' => array(__('you can still use <code>bwp_minify()</code> helper function if you disable this.', 'bwp-minify') => 'enable_min_css'),
 				'cb2' => array(__('most themes (e.g. Twenty Ten) use <code>bloginfo()</code> to print the main stylesheet (i.e. <code>style.css</code>) and BWP Minify will not be able to add it to the main minify string. If you want to minify <code>style.css</code> with the rest of your css files, you must enqueue it.', 'bwp-minify') => 'enable_bloginfo')
 			),
 			'input'	=> array(
 				'input_minurl' => array('size' => 91, 'disabled' => ' readonly="readonly"', 'label' => sprintf(__('This should be set automatically. If you think the URL is too long, please read <a href="%s#customization">here</a> to know how to properly modify this.', 'bwp-minify'), $this->plugin_url)),
-				'input_cache_dir' => array('size' => 91, 'disabled' => ' disabled="disabled"', 'label' => __('The cache directory must be writable (i.e. CHMOD to 755 or 777).', 'bwp-minify')),
+				'input_cache_dir' => array('size' => 91, 'disabled' => ' readonly="readonly"', 'label' => '<br />' . sprintf(__('<strong>Important</strong>: Changing cache directory is a two-step process, which is described in details <a href="%s#advanced_customization" target="_blank">here</a>. Please note that cache directory must be writable (i.e. CHMOD to 755 or 777).', 'bwp-minify'), $this->plugin_url)),
 				'input_maxfiles' => array('size' => 3, 'label' => __('file(s) at most.', 'bwp-minify')),
 				'input_maxage' => array('size' => 5, 'label' => __('&mdash;', 'bwp-minify')),
 				'input_custom_buster' => array('pre' => __('<em>&rarr; /min/?f=file.js&amp;ver=</em> ', 'bwp-minify'), 'size' => 12, 'label' => '.', 'disabled' => ' disabled="disabled"')
@@ -269,11 +281,14 @@ if (!empty($page))
 			'inline_fields' => array(
 				'input_maxage' => array('select_time_type' => 'select'),
 				'select_buster_type' => array('input_custom_buster' => 'input')
+			),
+			'inline' => array(
+				'input_cache_dir' => '<br /><br /><input type="submit" class="button-secondary action" name="flush_cache" value="' . __('Flush the cache', 'bwp-minify') . '" />'
 			)
 		);
 
 		// Get the default options
-		$options = $bwp_option_page->get_options(array('input_minurl', 'input_cache_dir', 'input_maxfiles', 'input_header', 'input_footer', 'input_direct', 'input_ignore', 'input_custom_buster', 'select_buster_type', 'enable_auto', 'enable_bloginfo'), $this->options);
+		$options = $bwp_option_page->get_options(array('input_minurl', 'input_cache_dir', 'input_maxfiles', 'input_header', 'input_footer', 'input_direct', 'input_ignore', 'input_custom_buster', 'select_buster_type', 'enable_min_js', 'enable_min_css', 'enable_bloginfo'), $this->options);
 
 		// Get option from the database
 		$options = $bwp_option_page->get_db_options($page, $options);
@@ -282,6 +297,17 @@ if (!empty($page))
 		$option_super_admin = $this->site_options;
 	}
 }
+
+		// Flush the cache
+		if (isset($_POST['flush_cache']) && !$this->is_normal_admin())
+		{
+			check_admin_referer($page);
+			if ($deleted = self::flush_cache($options['input_cache_dir']))
+				$this->add_notice('<strong>' . __('Notice', 'bwp-minify') . ':</strong> ' . sprintf(__("<strong>%d</strong> cached files have been deleted successfully!", 'bwp-minify'), $deleted));
+			else
+				$this->add_notice('<strong>' . __('Notice', 'bwp-minify') . ':</strong> ' . __("Could not delete any cached files. Please manually check the cache directory.", 'bwp-minify'));
+		}
+
 		// Get option from user input
 		if (isset($_POST['submit_' . $bwp_option_page->get_form_name()]) && isset($options) && is_array($options))
 		{
@@ -312,10 +338,13 @@ if (!empty($page))
 			// [WPMS Compatible]
 			if (!$this->is_normal_admin())
 				update_site_option($page, $options);
+			// Update options successfully
+			$this->add_notice(__('All options have been saved.', 'bwp-minify'));
 		}
 
 		// Guessing the cache directory
-		$options['input_cache_dir'] = $this->get_cache_dir($options['input_minurl']);
+		$options['input_cache_dir'] = (empty($options['input_cache_dir'])) ? $this->get_cache_dir($options['input_minurl']) : $options['input_cache_dir'];
+
 		// [WPMS Compatible]
 		if ($this->is_normal_admin())
 			$bwp_option_page->kill_html_fields($form, array(4,5));
@@ -354,7 +383,8 @@ if (!empty($page))
 		$temp = @parse_url($minurl);
 		if (isset($temp['scheme']) && isset($temp['host']))
 		{
-			$site_url = $temp['scheme'] . '://' . $temp['host'];
+			$port = (!empty($temp['port'])) ? ':' . $temp['port'] : '';
+			$site_url = $temp['scheme'] . '://' . $temp['host'] . $port;
 			$guess_cache = str_replace($site_url, '', $minurl);
 		}
 		else
@@ -364,6 +394,28 @@ if (!empty($page))
 		$guess_cache = str_replace($multisite_path, '', dirname($guess_cache));
 		$guess_cache = trailingslashit($_SERVER['DOCUMENT_ROOT']) . trim($guess_cache, '/') . '/cache/';
 		return apply_filters('bwp_minify_cache_dir', str_replace('\\', '/', $guess_cache));
+	}
+
+	private static function flush_cache($cache_dir)
+	{
+		$cache_dir = trailingslashit($cache_dir);
+		$deleted = 0;
+		if (is_dir($cache_dir))
+		{
+			if ($dh = opendir($cache_dir))
+			{
+				while (($file = readdir($dh)) !== false)
+				{
+					if (preg_match('/^minify_[a-z0-9_\-\.,]+(\.gz)?$/i', $file))
+					{
+						@unlink($cache_dir . $file);
+						$deleted++;
+					}
+				}
+				closedir($dh);
+			}
+		}
+		return $deleted;
 	}
 
 	function parse_positions()
@@ -390,7 +442,8 @@ if (!empty($page))
 	function get_base()
 	{
 		$temp = @parse_url(get_site_option('siteurl'));
-		$site_url = $temp['scheme'] . '://' . $temp['host'];
+		$port = (!empty($temp['port'])) ? ':' . $temp['port'] : '';
+		$site_url = $temp['scheme'] . '://' . $temp['host'] . $port;
 		$raw_base = trim(str_replace($site_url, '', get_site_option('siteurl')), '/');
 		/* More filtering will ba added in future */
 		$this->base = $raw_base;
@@ -407,6 +460,14 @@ if (!empty($page))
 
 			case 'wpver':
 				return $this->ver;
+			break;
+
+			case 'tver':
+				$theme = get_theme_data(STYLESHEETPATH . '/style.css');
+				if (!empty($theme['Version']))
+					return $theme['Version'];
+				else
+					return '';
 			break;
 
 			case 'custom':
@@ -438,7 +499,7 @@ if (!empty($page))
 			$temp[] = $handle;
 			$this->wp_styles_done[] = $handle;
 		}
-		else
+		else if (!in_array($handle, $this->dynamic_styles))
 			$this->dynamic_styles[] = $handle;
 	}
 
@@ -498,9 +559,31 @@ if (!empty($page))
 	 */
 	function process_media_source($src = '')
 	{
+		$src = trim($src);
 		// Absolute url
-		if (false !== strpos($src, 'http'))
-			$src = $this->base . str_replace(get_option('siteurl'), '', $src);
+		if (0 === strpos($src, 'http'))
+		{
+			// We will need to handle both http and https, even if site URL is still set to http
+			$tmp_src = str_replace(array(get_option('siteurl'), str_replace('http://', 'https://', get_option('siteurl'))), '', $src);
+			// If there was no difference between tmp_src and src, we need to loop through the base
+			if ($tmp_src == $src && !empty($this->base))
+			{
+				$base_cpns = explode('/', preg_replace('/[\/]+/i', '/', $this->base));
+				array_pop($base_cpns);
+				foreach ($base_cpns as $key => $cpn)
+				{
+					$cpn_path = '/' . $cpn;
+					for ($i = 0; $i < $key; $i++)
+						$cpn_path = '/' . $base_cpns[$i] . $cpn_path;
+					$cpn_url = 'http://' . $_SERVER['HTTP_HOST'] . $cpn_path;
+					$src = str_replace(array($cpn_url, str_replace('http://', 'https://', $cpn_url)), '', $src);
+				}
+
+				$src = $cpn_path . $src;
+			}
+			else
+				$src = $this->base . $tmp_src;
+		}
 		// Relative absolute url from root
 		else if ('/' === substr($src, 0, 1))
 			// Add base for wp-includes and wp-admin directory
@@ -530,10 +613,12 @@ if (!empty($page))
 		{
 			$dep_src = $wp_media->registered[$dep]->src;
 			$dep_src = ($this->is_local($dep_src)) ? $this->process_media_source($dep_src) : $dep_src;
-			$dep_handle = ($this->is_local($dep_src)) ? '' : $dep;
-			$is_added = $this->is_added($dep_src, $type, $dep_handle, $media);
+			$ext_dep = ($this->is_local($dep_src)) ? '' : $dep;
+			$is_added = $this->is_added($dep_src, $type, $ext_dep, $media, $dep);
 			if ('min' == $is_added)
 				$return = 'min';
+			else if ('done' == $is_added)
+				$return = 'wp';
 			if (!$is_added)
 				return false;
 		}
@@ -541,18 +626,26 @@ if (!empty($page))
 		return $return;
 	}
 
-	function is_added($src, $type = 'scripts', $handle = '', $media = NULL)
+	function is_added($src, $type = 'scripts', $handle = '', $media = NULL, $dep_handle = '')
 	{
 		if (!isset($media))
-			$media = ('scripts' == $type) ? array_merge($this->header_scripts, $this->footer_scripts) : $this->styles;
+			$media = ('scripts' == $type) ? array_merge($this->header_scripts, $this->footer_scripts) : array_merge($this->styles, $this->media_styles);
+
 		// Loop through media array to find the source
 		foreach ($media as $media_string)
 			if (in_array($src, $media_string))
 				return 'min';
+
+		// Loop throught done array to find the handle
+		$done_media = ('scripts' == $type) ? $this->wp_scripts_done : $this->wp_styles_done;
+		foreach ($done_media as $media_handle)
+			if ($dep_handle == $media_handle)
+				return 'done';
+
 		// Also check extra media if needed
 		if (!empty($handle))
 		{
-			$extra_media = ('scripts' == $type) ? array_merge($this->header_dynamic, $this->footer_dynamic, $this->wp_scripts_done) : array_merge($this->dynamic_styles, $this->wp_styles_done);
+			$extra_media = ('scripts' == $type) ? array_merge($this->header_dynamic, $this->footer_dynamic) : array_merge($this->dynamic_styles);
 			if (in_array($handle, $extra_media))
 				return 'wp';
 		}		
@@ -580,8 +673,9 @@ if (!empty($page))
 			return '';
 
 		$buster = (!empty($this->buster)) ? '&amp;ver=' . $this->buster : '';
+		$scheme_str = is_ssl() && !is_admin() ? 'https://' : 'http://';
 
-		return trailingslashit($this->options['input_minurl']) . '?f=' . $string . $buster;
+		return trailingslashit(str_replace(array('http://', 'https://'), $scheme_str, $this->options['input_minurl'])) . '?f=' . $string . $buster;
 	}
 
 	function get_minify_tag($string, $type, $media = '')
@@ -641,7 +735,7 @@ if (!empty($page))
 	function minify_styles($todo)
 	{
 		global $wp_styles;
-				
+
 		$total = sizeof($todo);
 		$count = 0;
 		$queued = 0;
@@ -680,7 +774,7 @@ if (!empty($page))
 				if (did_action('bwp_minify_after_styles'))
 				{
 					if (!$this->is_added($src, 'styles', $handle))
-					$temp[] = $handle;
+						$temp[] = $handle;
 					continue;
 				}
 				// If this style has a different media type rather than 'all', '',
@@ -773,17 +867,25 @@ if (!empty($page))
 		global $wp_scripts;
 
 		$are_deps_added = $this->are_deps_added($handle, $type);
-		$wp = ('wp' == $are_deps_added || ('min' == $this->are_deps_added($handle, $type, $this->header_scripts) && 'footer' == $type && did_action('bwp_minify_printed_header_scripts'))) ? true : false;
+		$are_deps_min = $this->are_deps_added($handle, $type, $this->header_scripts);
+		$wp = ('wp' == $are_deps_added || ('min' == $are_deps_min && 'footer' == $type && did_action('bwp_minify_printed_header_scripts'))) ? true : false;
 
 		if (!is_array($deps) || 0 == sizeof($deps) || $wp)
 		{
 			$temp[] = $handle;
-			$this->wp_scripts_done[] = $handle;
+			if (!in_array($handle, $this->wp_scripts_done))
+				$this->wp_scripts_done[] = $handle;
 		}
 		else if ('header' == $type)
-			$this->header_dynamic[] = $handle;
-		else if ('footer' == $type)
-			$this->footer_dynamic[] = $handle;
+		{
+			if (!in_array($handle, $this->header_dynamic))
+				$this->header_dynamic[] = $handle;
+		}
+		else if ('footer' == $type && 'min' != $are_deps_min)
+		{
+			if (!in_array($handle, $this->footer_dynamic))
+				$this->footer_dynamic[] = $handle;
+		}
 	}
 
 	/**
@@ -856,6 +958,9 @@ if (!empty($page))
 								$temp[] = $script_handle;
 							continue;
 						}
+						else if ($this->is_added($src, 'scripts', $script_handle))
+						// If footer scripts have not yet been printed, ignore this script if if was added before
+								continue;
 
 						$count_f++; $footer_count++;
 						$this->append_minify_string($this->footer_scripts, $footer_count, $src, $count_f == $total_footer);
@@ -957,7 +1062,10 @@ if (!empty($page))
 		global $wp_scripts;
 
 		foreach ($scripts as $handle)
-			$wp_scripts->print_scripts_l10n($handle);
+			if (version_compare($this->ver, '3.3', '>='))
+				$wp_scripts->print_extra_script($handle);
+			else
+				$wp_scripts->print_scripts_l10n($handle);
 	}
 
 	function print_header_scripts_l10n()
