@@ -3,8 +3,8 @@ Contributors: OddOneOut
 Donate link: http://betterwp.net/wordpress-plugins/bwp-minify/
 Tags: CSS, javascript, JS, minify, minification, optimization, optimize
 Requires at least: 2.8
-Tested up to: 3.3.1
-Stable tag: 1.2.0
+Tested up to: 3.4.2
+Stable tag: 1.2.1
 
 Allows you to minify your CSS and JS files for faster page loading for visitors.
 
@@ -68,6 +68,16 @@ Please [help translate](http://betterwp.net/wordpress-tips/create-pot-file-using
 1. Changing the Minify URL, now one can have a shorter and nicer URL ;)
 
 == Changelog ==
+
+= 1.2.1 =
+* Added support for inline styles (available since WordPress 3.3).
+* Cache directory is now hidden from normal admins when used on a Multi-site environment.
+* Added additional hooks allowing developers to control Minify Tags and Minify Src, more info:  http://betterwp.net/community/topic/226/additional-hooks-filters-to-getminifytag/ (`bwp_get_minify_src`, `bwp_get_minify_tag`)
+* Added a new hook for buster allowing developers to dynamically work with this variable (`bwp_minify_get_buster`)
+* Fixed the pass-by-references fatal error when activating the plugin on a host using PHP 5.4 or higher.
+* Fixed a possible bug where dependencies are ignored, more info: http://betterwp.net/community/topic/153/dependencies-ignored/
+* Fixed a possible bug where scripts are echoed twice.
+* Updated Turkish (tr_TR) translation - Thanks to Hakan E!
 
 = 1.2.0 =
 * New Features:

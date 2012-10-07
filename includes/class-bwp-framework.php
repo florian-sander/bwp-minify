@@ -98,6 +98,7 @@ class BWP_FRAMEWORK {
 	 * Other special variables
 	 */
 	protected static $_menu_under_settings = false;
+	protected static $_simple_menu = false;
 
 	/**
 	 * Build base properties
@@ -370,7 +371,7 @@ class BWP_FRAMEWORK {
 
 	function plugin_action_links($links, $file) 
 	{
-		$option_script = (self::$_menu_under_settings) ? 'admin.php' : 'options-general.php';
+		$option_script = (!self::$_menu_under_settings && !self::$_simple_menu) ? 'admin.php' : 'options-general.php';
 		$option_keys = array_values($this->option_keys);
 		if ($file == plugin_basename($this->plugin_file))
 			$links[] = '<a href="' . $option_script . '?page=' . $option_keys[0] . '">' . __('Settings') . '</a>';

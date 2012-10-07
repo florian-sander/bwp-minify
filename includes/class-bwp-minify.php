@@ -59,7 +59,7 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 	/**
 	 * Queued styles to be printed
 	 */
-	var $styles = array(array()), $media_styles = array('print' => array()), $dynamic_styles = array(), $wp_styles_done = array();
+	var $styles = array(array()), $media_styles = array('print' => array()), $dynamic_media_styles = array('print' => array()), $dynamic_styles = array(), $inline_styles = array(), $wp_styles_done = array();
 	 
 	/**
 	 * Are we still able to print styles?
@@ -74,7 +74,7 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 	/**
 	 * Constructor
 	 */	
-	function __construct($version = '1.2.0')
+	function __construct($version = '1.2.1')
 	{
 		// Plugin's title
 		$this->plugin_title = 'BetterWP Minify';
@@ -103,11 +103,15 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 			'select_time_type' => 60
 		);
 		// Super admin only options
-		$this->site_options = array('input_minurl', 'input_cache_dir');
+		$this->site_options = array('input_cache_dir');
 
 		$this->build_properties('BWP_MINIFY', 'bwp-minify', $options, 'BetterWP Minify', dirname(dirname(__FILE__)) . '/bwp-minify.php', 'http://betterwp.net/wordpress-plugins/bwp-minify/', false);
 
 		$this->add_option_key('BWP_MINIFY_OPTION_GENERAL', 'bwp_minify_general', __('Better WordPress Minify Settings', 'bwp-minify'));
+
+		// Simple menu under Settings
+		self::$_simple_menu = true;
+
 		add_action('init', array($this, 'default_minurl'));
 		add_action('init', array($this, 'init'));
 	}
@@ -172,11 +176,17 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 				add_action('wp_head', array($this, 'print_styles'), 8);
 				add_action('wp_head', array($this, 'print_media_styles'), 8);
 				add_action('wp_head', array($this, 'print_dynamic_styles'), 8);
+				add_action('wp_head', array($this, 'print_dynamic_media_styles'));
+				// Add support for inline styles since WordPress 3.3
+				if (version_compare(get_bloginfo('version'), '3.3', '>='))
+					add_action('wp_head', array($this, 'print_inline_styles'), 8);
 				add_action('login_head', array($this, 'print_styles'));
 				add_action('login_head', array($this, 'print_media_styles'));
+				add_action('login_head', array($this, 'print_dynamic_media_styles'));
 				add_action('login_head', array($this, 'print_dynamic_styles'));
 				add_action('admin_head', array($this, 'print_styles'), 8);
 				add_action('admin_head', array($this, 'print_media_styles'), 8);
+				add_action('admin_head', array($this, 'print_dynamic_media_styles'), 8);
 				add_action('admin_head', array($this, 'print_dynamic_styles'), 8);
 			}
 		}
@@ -347,7 +357,7 @@ if (!empty($page))
 
 		// [WPMS Compatible]
 		if ($this->is_normal_admin())
-			$bwp_option_page->kill_html_fields($form, array(4,5));
+			$bwp_option_page->kill_html_fields($form, array(5,6));
 		// Cache buster system
 		$this->options = array_merge($this->options, $options);
 		$options['input_custom_buster'] = $this->get_buster($options['select_buster_type']);
@@ -451,37 +461,37 @@ if (!empty($page))
 
 	function get_buster($type)
 	{
+		$buster = '';
+
 		switch ($type)
 		{
 			case 'mtime':
 				if (file_exists($this->options['input_cache_dir']))
-					return filemtime($this->options['input_cache_dir']);
+					$buster = filemtime($this->options['input_cache_dir']);
 			break;
 
 			case 'wpver':
-				return $this->ver;
+				$buster = $this->ver;
 			break;
 
 			case 'tver':
 				$theme = get_theme_data(STYLESHEETPATH . '/style.css');
 				if (!empty($theme['Version']))
-					return $theme['Version'];
-				else
-					return '';
+					$buster = $theme['Version'];
 			break;
 
 			case 'custom':
-				return $this->options['input_custom_buster'];
+				$buster = $this->options['input_custom_buster'];
 			break;
 
 			case 'none':
 			default:
 				if (is_admin())
-					return __('empty', 'bwp-minify');
-				else
-					return '';
+					$buster = __('empty', 'bwp-minify');
 			break;
 		}
+
+		return apply_filters('bwp_minify_get_buster', $buster);
 	}
 	
 	function is_in($handle, $position = 'header')
@@ -492,7 +502,7 @@ if (!empty($page))
 			return true;
 	}
 
-	function ignores_style($handle, $temp, $deps)
+	function ignores_style($handle, &$temp, $deps)
 	{
 		if (!is_array($deps) || 0 == sizeof($deps) || 'wp' == $this->are_deps_added($handle, ''))
 		{
@@ -501,6 +511,14 @@ if (!empty($page))
 		}
 		else if (!in_array($handle, $this->dynamic_styles))
 			$this->dynamic_styles[] = $handle;
+	}
+
+	private static function has_inline($handle)
+	{
+		global $wp_styles;
+		if (isset($wp_styles->registered[$handle]->extra['after']))
+			return true;
+		return false;
 	}
 
 	/**
@@ -626,6 +644,20 @@ if (!empty($page))
 		return $return;
 	}
 
+	private function are_deps_added_to_media($handle)
+	{
+		global $wp_styles;
+		$deps = $wp_styles->registered[$handle]->deps;
+
+		foreach ($deps as $dep)
+		{
+			if ((isset($this->media_styles['screen']) && array_key_exists($dep, $this->media_styles['screen'])) || (isset($this->media_styles['screen']) && array_key_exists($dep, $this->media_styles['print'])))
+				return true;
+		}
+
+		return false;
+	}
+
 	function is_added($src, $type = 'scripts', $handle = '', $media = NULL, $dep_handle = '')
 	{
 		if (!isset($media))
@@ -675,7 +707,7 @@ if (!empty($page))
 		$buster = (!empty($this->buster)) ? '&amp;ver=' . $this->buster : '';
 		$scheme_str = is_ssl() && !is_admin() ? 'https://' : 'http://';
 
-		return trailingslashit(str_replace(array('http://', 'https://'), $scheme_str, $this->options['input_minurl'])) . '?f=' . $string . $buster;
+		return apply_filters('bwp_get_minify_src', trailingslashit(str_replace(array('http://', 'https://'), $scheme_str, $this->options['input_minurl'])) . '?f=' . $string . $buster, $string, $buster, $this->options['input_minurl']);
 	}
 
 	function get_minify_tag($string, $type, $media = '')
@@ -686,18 +718,20 @@ if (!empty($page))
 		switch ($type)
 		{
 			case 'script':
-				return "<script type='text/javascript' src='" . $this->get_minify_src($string) . "'></script>\n";
+				$return  = "<script type='text/javascript' src='" . $this->get_minify_src($string) . "'></script>\n";
 			break;
 			
 			case 'style':
 			default:			
-				return "<link rel='stylesheet' type='text/css' media='all' href='" . $this->get_minify_src($string) . "' />\n";
+				$return = "<link rel='stylesheet' type='text/css' media='all' href='" . $this->get_minify_src($string) . "' />\n";
 			break;
 
 			case 'media':
-				return "<link rel='stylesheet' type='text/css' media='$media' href='" . $this->get_minify_src($string) . "' />\n";
+				$return = "<link rel='stylesheet' type='text/css' media='$media' href='" . $this->get_minify_src($string) . "' />\n";
 			break;
 		}
+
+		return apply_filters('bwp_get_minify_tag', $return, $string, $type, $media);
 	}
 
 	/**
@@ -783,9 +817,16 @@ if (!empty($page))
 				if (!empty($the_style->args) && 'all' != $the_style->args)
 				{
 					$media = $the_style->args;
-					if (!isset($this->media_styles[$media]))
-						$this->media_styles[$media] = array();
-					$this->media_styles[$media][] = $src;
+					// if this style has dependency, make sure it is added after all parent media styles
+					$media_array = (isset($the_style->deps[0])) ? $this->dynamic_media_styles : $this->media_styles;
+					if (!isset($media_array[$media]))
+						$media_array[$media] = array();
+					$media_array[$media][$handle] = $src;
+					// pass the media styles back
+					if (isset($the_style->deps[0]))
+						$this->dynamic_media_styles = $media_array;
+					else
+						$this->media_styles = $media_array;
 				}
 				// If this style needs conditional statement (e.g. IE-specific stylesheets) 
 				// or is an alternate stylesheet (@see http://www.w3.org/TR/REC-html40/present/styles.html#h-14.3.1), 
@@ -798,6 +839,15 @@ if (!empty($page))
 				}
 				else
 				{
+					// If this 'all' style has dependencies that are put inside a media link tag, we need to 
+					// add this style to dynamic_media_styles and ignore it here
+					if (isset($the_style->deps[0]) && $this->are_deps_added_to_media($handle))
+					{
+						if (!isset($this->dynamic_media_styles['all']))
+							$this->dynamic_media_styles['all'] = array();
+						$this->dynamic_media_styles['all'][] = $src;
+						continue;
+					}
 					$queued++;
 					$this->append_minify_string($this->styles, $queued, $src, $count == $total, true, 'styles');
 					// If this style has support for rtl language and the locale is rtl, 
@@ -805,13 +855,17 @@ if (!empty($page))
 					if ('rtl' === $wp_styles->text_direction && isset($the_style->extra['rtl']) && $the_style->extra['rtl'])
 						$this->append_minify_string($this->styles, $queued, $this->rtl_css_href($handle), $count == $total, false, 'styles');
 				}
+
+				// If this style has inline styles, add them too
+				if (true == self::has_inline($handle))
+					$this->inline_styles[] = $handle;
+
 			}
 			else
-				// error: Call-time pass-by-reference deprecated
-				$this->ignores_style($handle, &$temp, $the_style->deps);
+				$this->ignores_style($handle, $temp, $the_style->deps);
 
 			if (true == $ignore)
-				$this->ignores_style($handle, &$temp, $the_style->deps);
+				$this->ignores_style($handle, $temp, $the_style->deps);
 		}
 
 		//$this->printable = false;
@@ -854,6 +908,17 @@ if (!empty($page))
 		do_action('bwp_minify_after_media_styles');
 	}
 
+	function print_dynamic_media_styles()
+	{
+		$styles = (array) $this->dynamic_media_styles;
+
+		foreach ($styles as $key => $style_array)
+		{
+			if (0 < sizeof($style_array))
+				echo $this->get_minify_tag(implode(',', $style_array), 'media', $key);
+		}
+	}
+
 	function print_dynamic_styles()
 	{
 		global $wp_styles;
@@ -862,7 +927,15 @@ if (!empty($page))
 			$wp_styles->do_item($handle);
 	}
 
-	function ignores_script($handle, $temp, $deps, $type = 'header')
+	public function print_inline_styles()
+	{
+		global $wp_styles;
+
+		foreach ($this->inline_styles as $handle)
+			$wp_styles->print_inline_style($handle);
+	}
+
+	function ignores_script($handle, &$temp, $deps, $type = 'header')
 	{
 		global $wp_scripts;
 
@@ -872,7 +945,9 @@ if (!empty($page))
 
 		if (!is_array($deps) || 0 == sizeof($deps) || $wp)
 		{
-			$temp[] = $handle;
+			if (!in_array($handle, $this->header_dynamic)) 
+				$temp[] = $handle;
+
 			if (!in_array($handle, $this->wp_scripts_done))
 				$this->wp_scripts_done[] = $handle;
 		}
@@ -944,7 +1019,7 @@ if (!empty($page))
 				$src = $this->process_media_source($src);
 				// If this script is not allowed
 				if ('all' != $this->print_positions['allowed'] && !$this->is_in($script_handle, 'allowed'))
-					$this->ignores_script($script_handle, &$temp, $the_script->deps, $ignore_type);
+					$this->ignores_script($script_handle, $temp, $the_script->deps, $ignore_type);
 				// If this script does not belong to 'direct' or 'ignore' list
 				else if (!$this->is_in($script_handle, 'ignore') && !$this->is_in($script_handle, 'direct'))
 				{
@@ -959,7 +1034,7 @@ if (!empty($page))
 							continue;
 						}
 						else if ($this->is_added($src, 'scripts', $script_handle))
-						// If footer scripts have not yet been printed, ignore this script if if was added before
+						// If footer scripts have not yet been printed, ignore this script if it was added before
 								continue;
 
 						$count_f++; $footer_count++;
@@ -980,10 +1055,10 @@ if (!empty($page))
 						$count_h++; $header_count++;
 						$this->append_minify_string($this->header_scripts, $header_count, $src, $count_h == $total - $total_footer);
 						if (true == $this->is_l10n($script_handle))
-							$this->header_l10n[] = $script_handle;							
+							$this->header_l10n[] = $script_handle;
 					}
 					else
-						$this->ignores_script($script_handle, &$temp, $the_script->deps, $ignore_type);				
+						$this->ignores_script($script_handle, $temp, $the_script->deps, $ignore_type);				
 				}
 				else
 				{
@@ -994,11 +1069,11 @@ if (!empty($page))
 						$wp_scripts->registered[$script_handle]->ver = NULL;
 					}
 
-					$this->ignores_script($script_handle, &$temp, $the_script->deps, $ignore_type);
+					$this->ignores_script($script_handle, $temp, $the_script->deps, $ignore_type);
 				}
 			}
 			else
-				$this->ignores_script($script_handle, &$temp, $the_script->deps, $ignore_type);
+				$this->ignores_script($script_handle, $temp, $the_script->deps, $ignore_type);
 		}
 
 		//$this->queueable = false;

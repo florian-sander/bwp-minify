@@ -3,15 +3,16 @@ msgstr ""
 "Project-Id-Version: BWP Minify\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-03-20 21:51+0700\n"
-"PO-Revision-Date: 2012-03-20 21:52+0700\n"
-"Last-Translator: \n"
-"Language-Team: KazancExpert <kazancexpert@gmail.com>\n"
+"PO-Revision-Date: 2012-03-29 10:45+0200\n"
+"Last-Translator: kazancexpert <kazancexpert@gmail.com>\n"
+"Language-Team: kazancexpert <kazancexpert@gmail.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-KeywordsList: _;gettext;gettext_noop;__;_e\n"
 "X-Poedit-Basepath: .\n"
 "X-Poedit-SourceCharset: utf-8\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Poedit-Language: Turkish\n"
 "X-Poedit-Country: TURKEY\n"
 "X-Poedit-SearchPath-0: .\n"
@@ -75,7 +76,7 @@ msgstr "BetterWP.net en son güncellemeleri!"
 
 #: includes/class-bwp-framework.php:231
 msgid "Follow me on Twitter!"
-msgstr "Beni Twitter üzerinden takip et!"
+msgstr "Beni Twitter'da takip et!"
 
 #: includes/class-bwp-framework.php:240
 #, php-format
@@ -103,18 +104,16 @@ msgid "General Options"
 msgstr "Genel Seçenekler"
 
 #: includes/class-bwp-minify.php:224
-#, fuzzy
 msgid "Minify JS files automatically?"
-msgstr "Otomatik CSS, JS dosyaları küçültme(Minify)?"
+msgstr "JS dosyalarını otomatik küçült (Minify)?"
 
 #: includes/class-bwp-minify.php:225
-#, fuzzy
 msgid "Minify CSS files automatically?"
-msgstr "Otomatik CSS, JS dosyaları küçültme(Minify)?"
+msgstr "CSS dosyalarını otomatik küçült (Minify)?"
 
 #: includes/class-bwp-minify.php:226
 msgid "Minify <code>bloginfo()</code> stylesheets?"
-msgstr "<code>bloginfo()</code> stil sayfaları küçültme?"
+msgstr "<code>bloginfo()</code> stil sayfalarını küçült?"
 
 #: includes/class-bwp-minify.php:227
 msgid "Minifying Options"
@@ -125,13 +124,12 @@ msgid "Minify URL (double-click to edit)"
 msgstr "Minify URL (düzenlemek için çift-tık)"
 
 #: includes/class-bwp-minify.php:229
-#, fuzzy
 msgid "Cache directory (double-click to edit)"
-msgstr "Minify URL (düzenlemek için çift-tık)"
+msgstr "Önbellek dizini (düzenlemek için çift-tık)"
 
 #: includes/class-bwp-minify.php:230
 msgid "One minify string will contain"
-msgstr "Bir minify dizesinin içereceği"
+msgstr "Bir minify dizesi en fazla"
 
 #: includes/class-bwp-minify.php:231
 msgid "Append the minify string with"
@@ -143,15 +141,15 @@ msgstr "Küçültme Betik Seçenekleri"
 
 #: includes/class-bwp-minify.php:233
 msgid "Scripts to be minified in header"
-msgstr "Header için küçültülecek betikler(scripts)"
+msgstr "Header içine küçültülecek betikler(scripts)"
 
 #: includes/class-bwp-minify.php:234
 msgid "Scripts to be minified in footer"
-msgstr "Footer için küçültülecek betikler"
+msgstr "Footer içine küçültülecek betikler"
 
 #: includes/class-bwp-minify.php:235
 msgid "Scripts to be minified and then printed separately"
-msgstr "Küçültülmüş ve daha sonra ayrıca yazdırılmış betikler"
+msgstr "Küçültülecek ve daha sonra ayrı yazdırılacak betikler"
 
 #: includes/class-bwp-minify.php:236
 msgid "Scripts to be ignored (not minified)"
@@ -188,11 +186,11 @@ msgstr "Bir şey ekleme"
 
 #: includes/class-bwp-minify.php:253
 msgid "Cache folder&#8217;s last modified time"
-msgstr "Önbellek klasörünün son değişikliği"
+msgstr "Önbellek klasörü son değişiklik zamanı"
 
 #: includes/class-bwp-minify.php:254
 msgid "Your WordPress&#8217;s current version"
-msgstr "Wordpress şuan ki sürüm"
+msgstr "Wordpress geçerli sürümünüz"
 
 #: includes/class-bwp-minify.php:255
 msgid "A custom number"
@@ -200,7 +198,6 @@ msgstr "Kişisel bir numara"
 
 #: includes/class-bwp-minify.php:259
 #: includes/class-bwp-minify.php:260
-#, fuzzy
 msgid "you can still use <code>bwp_minify()</code> helper function if you disable this."
 msgstr "Bunu devre dışı bıraksanız da hala şablon fonksiyonu <code>bwp_minify()</code> kullanabilirsiniz."
 
@@ -216,11 +213,11 @@ msgstr "Bunun otomatik olarak ayarlanması gerekir. Eğer URL çok uzunsa , doğ
 #: includes/class-bwp-minify.php:265
 #, php-format
 msgid "<strong>Important</strong>: Changing cache directory is a two-step process, which is described in details <a href=\"%s#config\" target=\"_blank\">here</a>. Please note that cache directory must be writable (i.e. CHMOD to 755 or 777)."
-msgstr ""
+msgstr "<strong>Önemli</strong>: Önbellek dizinini değiştirmek iki adımlı bir işlemdir, <a href=\"%s#config\" target=\"_blank\">burada</a> ayrıntılılarıyla tarif edilmiştir. Önbellek dizininin yazılabilir olması gerektiğini unutmayın (örn. CHMOD 755 ya da 777)."
 
 #: includes/class-bwp-minify.php:266
 msgid "file(s) at most."
-msgstr "En fazla dosya(lar)."
+msgstr "dosya içerecektir."
 
 #: includes/class-bwp-minify.php:267
 msgid "&mdash;"
@@ -236,25 +233,25 @@ msgstr "<em><strong>Not:</strong> Yukarıdakilerden birini eklediğinizde taray�
 
 #: includes/class-bwp-minify.php:285
 msgid "Flush the cache"
-msgstr ""
+msgstr "Önbelleği boşalt"
 
 #: includes/class-bwp-minify.php:305
 #: includes/class-bwp-minify.php:307
 msgid "Notice"
-msgstr ""
+msgstr "Duyuru"
 
 #: includes/class-bwp-minify.php:305
 #, php-format
 msgid "<strong>%d</strong> cached files have been deleted successfully!"
-msgstr ""
+msgstr "Önbelleklenmiş <strong>%d</strong> dosya başarıyla silindi!"
 
 #: includes/class-bwp-minify.php:307
 msgid "Could not delete any cached files. Please manually check the cache directory."
-msgstr ""
+msgstr "Önbelleğe alınmış dosyalar silinemedi. Lütfen önbellek dizinini el ile kontrol edin."
 
 #: includes/class-bwp-minify.php:341
 msgid "All options have been saved."
-msgstr ""
+msgstr "Tüm seçenekler kaydedildi."
 
 #: includes/class-bwp-minify.php:357
 msgid "Warning"
@@ -276,8 +273,3 @@ msgstr "Eklenti Konfigürasyonu"
 msgid "Save Changes"
 msgstr "Değişiklikleri Kaydet"
 
-#~ msgid "Cache will be stored in (by default)"
-#~ msgstr "Önbellek burada saklanacak (varsayılan)"
-
-#~ msgid "The cache directory must be writable (i.e. CHMOD to 755 or 777)."
-#~ msgstr "Önbellek dizini yazılabilir olmalıdır (örn. CHMOD 755 veya 777)."
