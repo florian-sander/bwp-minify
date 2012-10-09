@@ -4,7 +4,7 @@ Donate link: http://betterwp.net/wordpress-plugins/bwp-minify/
 Tags: CSS, javascript, JS, minify, minification, optimization, optimize
 Requires at least: 2.8
 Tested up to: 3.4.2
-Stable tag: 1.2.1
+Stable tag: 1.2.2
 
 Allows you to minify your CSS and JS files for faster page loading for visitors.
 
@@ -68,6 +68,9 @@ Please [help translate](http://betterwp.net/wordpress-tips/create-pot-file-using
 1. Changing the Minify URL, now one can have a shorter and nicer URL ;)
 
 == Changelog ==
+
+= 1.2.2 =
+* Fixed a possible fatal error on certain installations.
 
 = 1.2.1 =
 * Added support for inline styles (available since WordPress 3.3).

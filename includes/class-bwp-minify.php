@@ -74,7 +74,7 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 	/**
 	 * Constructor
 	 */	
-	function __construct($version = '1.2.1')
+	function __construct($version = '1.2.2')
 	{
 		// Plugin's title
 		$this->plugin_title = 'BetterWP Minify';
@@ -108,9 +108,6 @@ class BWP_MINIFY extends BWP_FRAMEWORK {
 		$this->build_properties('BWP_MINIFY', 'bwp-minify', $options, 'BetterWP Minify', dirname(dirname(__FILE__)) . '/bwp-minify.php', 'http://betterwp.net/wordpress-plugins/bwp-minify/', false);
 
 		$this->add_option_key('BWP_MINIFY_OPTION_GENERAL', 'bwp_minify_general', __('Better WordPress Minify Settings', 'bwp-minify'));
-
-		// Simple menu under Settings
-		self::$_simple_menu = true;
 
 		add_action('init', array($this, 'default_minurl'));
 		add_action('init', array($this, 'init'));
