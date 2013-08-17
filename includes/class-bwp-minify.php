@@ -1115,8 +1115,14 @@ if (!empty($page))
 		global $wp_scripts;
 
 		$scripts = ('header' == $type) ? $this->header_dynamic : $this->footer_dynamic;
-		foreach ($scripts as $handle)
-			$wp_scripts->do_item($handle);
+		foreach ($scripts as $handle) {
+			/* fs: Check if script has a source, before calling do_item(). Some scripts (i.e. jquery) have empty sources which leads
+			 * to broken script inclusions. It seems they can be savely ignored. This is just a quick hack, though. The exact cause of
+			 * the problem should be investigated in detail.
+			 */
+			if ($wp_scripts->registered[$handle]->src && strlen($wp_scripts->registered[$handle]->src) > 0)
+				$wp_scripts->do_item($handle);
+		}
 	}
 
 	function print_dynamic_header_scripts()
