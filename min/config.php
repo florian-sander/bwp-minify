@@ -59,6 +59,9 @@ $min_allowDebugFlag = false;
 //require dirname(__FILE__) . '/lib/Minify/Cache/APC.php';
 //$min_cachePath = new Minify_Cache_APC();
 
+// Set cache to bwp-minify/cache
+$min_cachePath = dirname(__FILE__) . '/../cache';
+
 
 /**
  * Leave an empty string to use PHP's $_SERVER['DOCUMENT_ROOT'].
